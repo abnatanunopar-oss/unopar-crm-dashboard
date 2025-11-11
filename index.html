@@ -312,6 +312,11 @@
         .toast.success { background-color: var(--success-green); }
         .toast.error { background-color: var(--danger-red); }
         .toast.info { background-color: var(--unopar-blue-dark); }
+        .toast.fatal { 
+            background-color: var(--danger-red); 
+            font-weight: bold;
+            border: 2px solid white;
+        }
 
         /* Responsiveness */
         @media (max-width: 768px) {
@@ -537,7 +542,7 @@
 <script type="module">
     // === 1. IMPORTS DO FIREBASE ===
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -551,11 +556,11 @@
     let isAuthReady = false;
 
     // Variáveis injetadas pelo ambiente (Canvas/Teams)
+    // Se __app_id for undefined, usamos um ID genérico.
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    // Credenciais de FALLBACK (Genéricas e Seguras para Autenticação Anônima/Token)
-    // Usamos o appId dinamicamente para o projectId
+    // Credenciais de FALLBACK (Configuração mínima para inicialização anônima)
     const FALLBACK_CONFIG = {
         apiKey: "AIzaSyC0L0Gic-Fallback-KEY-Do-Not-USE-In-Prod", // Chave genérica.
         authDomain: `${appId}.firebaseapp.com`,
@@ -565,14 +570,13 @@
         appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0"
     };
 
-    let firebaseConfig = FALLBACK_CONFIG; // Começa sempre com o fallback
-    const DEBUG_FIREBASE_CONFIG_STATUS = typeof __firebase_config !== 'undefined' ? __firebase_config : 'INDEFINIDO';
+    let firebaseConfig = FALLBACK_CONFIG; // Valor padrão de fallback
 
     // Tenta obter e parsear a configuração real do Firebase, se disponível.
     try {
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             const injectedConfig = JSON.parse(__firebase_config);
-            // Sobrescreve SÓ SE a configuração injetada for válida
+            // Verifica se a configuração injetada parece razoável antes de usar
             if (injectedConfig.apiKey && injectedConfig.projectId) {
                 firebaseConfig = injectedConfig;
                 console.log("SUCESSO: Usando Configuração do Firebase Injetada.");
@@ -606,7 +610,7 @@
     /**
      * Função para exibir notificações Toast.
      * @param {string} message - A mensagem a ser exibida.
-     * @param {'success'|'error'|'info'} type - O tipo de notificação.
+     * @param {'success'|'error'|'info'|'fatal'} type - O tipo de notificação.
      */
     function showNotification(message, type = 'info') {
         const container = document.getElementById('toast-container');
@@ -615,7 +619,7 @@
         
         let icon = '';
         if (type === 'success') icon = '✅';
-        else if (type === 'error') icon = '❌';
+        else if (type === 'error' || type === 'fatal') icon = '❌';
         else icon = 'ℹ️';
 
         toast.innerHTML = `<span class="toast-icon">${icon}</span> ${message}`;
@@ -672,23 +676,20 @@
         // Desabilita botões preventivamente
         setControlsEnabled(false);
 
-        // 1. LINHA DE DEBUG (MANTIDA)
-        console.error("DEBUG: Conteúdo de __firebase_config (se presente):", DEBUG_FIREBASE_CONFIG_STATUS);
-
-        // 2. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO 
+        // 1. VERIFICAÇÃO CRÍTICA FINAL DA CONFIGURAÇÃO
         if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida, mesmo após o fallback.");
-            showNotification("ERRO FATAL: Configuração do Firebase ausente/inválida. App desativado.", 'error');
+            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida.");
+            showNotification("ERRO FATAL: Configuração do Firebase incompleta. Tente recarregar.", 'fatal');
             return;
         }
 
         try {
-            // 3. Inicializa o App
+            // 2. Inicializa o App
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
 
-            // 4. Tenta fazer login com o token personalizado ou anonimamente
+            // 3. Tenta fazer login com o token personalizado (se existir) ou anonimamente (fallback)
             const userCredential = initialAuthToken
                 ? await signInWithCustomToken(auth, initialAuthToken)
                 : await signInAnonymously(auth);
@@ -703,7 +704,7 @@
                 // Habilitar botões após a autenticação BEM SUCEDIDA
                 setControlsEnabled(true);
                 
-                // 5. Inicia os listeners de dados
+                // 4. Inicia os listeners de dados
                 startFirestoreListeners(userId);
                 showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
             } else {
@@ -714,9 +715,35 @@
         } catch (error) {
             // Captura erros comuns de inicialização/autenticação
             console.error("Erro ao inicializar Firebase ou Autenticar:", error);
-            const errorCode = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
-            showNotification(`Falha na Inicialização: ${errorCode}. App desativado.`, 'error');
-            setControlsEnabled(false); // Garante que fiquem desabilitados
+            
+            // Tratamento específico para o Teams/Ambiente de Injeção
+            if (error.code === 'auth/invalid-custom-token' && initialAuthToken) {
+                 // Este é um erro esperado se o token injetado for inválido. Vamos tentar anonimamente.
+                 console.warn("Token injetado inválido, tentando autenticação anônima...");
+                 try {
+                    const anonymousCredential = await signInAnonymously(auth);
+                     if (anonymousCredential && anonymousCredential.user) {
+                        userId = anonymousCredential.user.uid;
+                        isAuthReady = true;
+                        document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
+                        setControlsEnabled(true);
+                        startFirestoreListeners(userId);
+                        showNotification("Conexão anônima estabelecida. (Modo de Fallback)", 'info');
+                        return; // Sai da função após o sucesso anônimo
+                    }
+                 } catch (anonError) {
+                     // Se a anônima também falhar, é um erro fatal
+                     console.error("ERRO FATAL: Falha na Autenticação Anônima:", anonError);
+                     showNotification(`ERRO CRÍTICO: Falha na Autenticação. Código: ${anonError.code}`, 'fatal');
+                     setControlsEnabled(false);
+                     return;
+                 }
+            } else {
+                // Outros erros (Rede, Permissão etc.)
+                const errorCode = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
+                showNotification(`Falha na Inicialização: ${errorCode}. App desativado.`, 'fatal');
+                setControlsEnabled(false); // Garante que fiquem desabilitados
+            }
         }
     }
 
@@ -756,14 +783,10 @@
         });
 
         // --- Listener 2: Último Registro Diário ---
-        // ATENÇÃO: Firestore não suporta 'orderBy' por padrão sem índices em tempo de execução.
-        // O código original usava orderBy("data_id", "desc") e limit(1).
-        // Para evitar erros de índice, vamos manter o código, mas o cliente deve estar ciente
-        // de que, se houver muitos documentos, o orderBy pode falhar.
-        // Já que data_id é YYYY-MM-DD, a ordenação alfabética funciona como ordenação cronológica.
+        // Usamos orderBy("data_id", "desc") onde data_id é YYYY-MM-DD para funcionar como ordem cronológica.
         const q = query(
             collection(db, DAILY_COLLECTION_PATH(uid)),
-            orderBy("data_id", "desc"), // Mantido o orderBy, mas ciente do risco de índice ausente.
+            orderBy("data_id", "desc"), 
             limit(1)
         );
 
