@@ -694,12 +694,12 @@
             'App ID do Canvas': appId,
             'Token Inicial de Auth': initialAuthToken ? initialAuthToken.substring(0, 8) + '...' : 'NÃO INJETADO',
             'Mensagem de Erro (SDK)': errorMessage,
-            'Configuração Tentada': attemptedConfig 
+            'Configuração Tentada (Chave API ofuscada)': attemptedConfig 
                 ? JSON.stringify({ ...attemptedConfig, apiKey: attemptedConfig.apiKey ? attemptedConfig.apiKey.substring(0, 4) + '...' : 'N/A' }, null, 2)
                 : 'Configuração Injetada Estava Nula ou Inválida.'
         }
         
-        // Remove a string do Firebase para a tela de erro customizada
+        // Formata a saída para o <pre>
         configDisplay.textContent = JSON.stringify(displayData, null, 2);
         
         // Esconde o app principal e mostra a tela de erro
@@ -773,8 +773,9 @@
                 try {
                     userCredential = await signInWithCustomToken(auth, initialAuthToken);
                 } catch (e) {
+                    // Este erro é esperado se o token não for injetado corretamente.
                     console.warn("Token injetado inválido ou expirado. Tentando autenticação anônima...", e.code);
-                    // Falha no token customizado, continua para o bloco anônimo abaixo
+                    // Continua para o bloco anônimo abaixo
                 }
             }
 
@@ -853,6 +854,9 @@
         // Usamos orderBy("data_id", "desc") onde data_id é YYYY-MM-DD para funcionar como ordem cronológica.
         const q = query(
             collection(db, DAILY_COLLECTION_PATH(uid)),
+            // ATENÇÃO: É NECESSÁRIO UM ÍNDICE COMPOSTO PARA ESTE TIPO DE ORDENAÇÃO
+            // COMO NÃO PODEMOS CRIAR ÍNDICES, O onSnapshot COM orderBy PODE FALHAR EM TEMPO DE EXECUÇÃO.
+            // Pelo escopo deste projeto, assumiremos a necessidade de índices prontos para orderBy.
             orderBy("data_id", "desc"), 
             limit(1)
         );
@@ -872,7 +876,12 @@
             if (error.code === 'permission-denied') {
                 showNotification("ERRO CRÍTICO: Permissão Negada para ler Registros. Verifique suas Regras.", 'error');
             } else {
-                showNotification("Erro ao sincronizar Registros Diários (Rede ou Acesso).", 'error');
+                // Mensagem de erro que indica a possível falta de índice no orderBy
+                 if (error.message.includes('The query requires an index')) {
+                    showNotification("Erro: A busca em tempo real falhou por falta de índice Firestore (orderBy). O filtro de data ainda deve funcionar.", 'error');
+                 } else {
+                    showNotification("Erro ao sincronizar Registros Diários (Rede ou Acesso).", 'error');
+                 }
             }
         });
     }
