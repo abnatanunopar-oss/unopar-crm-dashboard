@@ -95,7 +95,7 @@
             background-color: var(--unopar-blue-dark);
             color: white;
         }
-        .btn-filter:hover { background-color: #1a2e7a; }
+        .btn-filter:hover:not(:disabled) { background-color: #1a2e7a; }
         .btn-filter:disabled { background-color: #a0a0a0; cursor: not-allowed; }
 
         /* Botão de Configuração - Cinza Profissional */
@@ -104,7 +104,7 @@
             color: white;
             padding: 10px 20px;
         }
-        .btn-config:hover { background-color: #5a6268; }
+        .btn-config:hover:not(:disabled) { background-color: #5a6268; }
         
         h2.group-title {
             color: var(--text-dark);
@@ -127,6 +127,7 @@
             padding: 15px 20px;
             border-radius: 8px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            min-height: 80px; /* Garante tamanho mínimo */
         }
         .kpi-value {
             font-size: 2.2em;
@@ -151,13 +152,12 @@
             overflow: hidden;
         }
         /* Barra de progresso visual */
-        .kpi-card-progresso::after {
-            content: '';
+        .progress-bar-overlay {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
-            width: var(--progresso-width, 0%);
+            width: 0%; /* Controlado pelo JS */
             background: linear-gradient(90deg, #17a2b840, transparent);
             z-index: 1;
             transition: width 0.5s ease-out;
@@ -191,6 +191,7 @@
             color: #333;
             padding: 15px;
             border-bottom: 4px solid var(--unopar-blue-dark);
+            text-align: center; /* Centraliza texto em telas pequenas */
         }
         .chart-placeholder h3 { font-size: 1.2em; margin: 0; padding: 0; color: var(--unopar-blue-dark); }
         .chart-placeholder p { font-size: 0.9em; color: #6c757d; margin-top: 5px; }
@@ -208,10 +209,11 @@
             box-shadow: 0 4px 12px rgba(255, 143, 0, 0.5);
             z-index: 50;
         }
-        .btn-insert:hover {
+        .btn-insert:hover:not(:disabled) {
             background-color: #e58100;
             box-shadow: 0 6px 15px rgba(255, 143, 0, 0.6);
         }
+        .btn-insert:disabled { background-color: #a0a0a0; cursor: not-allowed; box-shadow: none; }
 
         /* MODAIS */
         .modal {
@@ -272,7 +274,7 @@
             width: 100%;
             margin-top: 20px;
         }
-        .form-submit-btn:hover { background-color: #1a2e7a; }
+        .form-submit-btn:hover:not(:disabled) { background-color: #1a2e7a; }
         .form-submit-btn:disabled { background-color: #a0a0a0; cursor: not-allowed; }
         
         .close-btn { color: #aaa; float: right; font-size: 32px; font-weight: normal; transition: color 0.2s; cursor: pointer; }
@@ -380,7 +382,8 @@
             <div class="kpi-value" id="kpi-meta-remat">773</div>
             <div class="kpi-label">META REMATRÍCULA</div>
         </div>
-        <div class="kpi-card kpi-card-progresso" style="--progresso-width: 0%;">
+        <div class="kpi-card kpi-card-progresso">
+            <div class="progress-bar-overlay" id="progresso-bar" style="width: 0%;"></div>
             <div class="kpi-value" id="kpi-progresso">0%</div>
             <div class="kpi-label">Progresso da Meta Total</div>
         </div>
@@ -630,13 +633,27 @@
         return `${dd}/${mm}/${yyyy}`;
     }
 
+    /**
+     * Função para habilitar/desabilitar os botões interativos
+     * @param {boolean} enabled - true para habilitar, false para desabilitar
+     */
+    function setControlsEnabled(enabled) {
+        document.getElementById('openModalBtn').disabled = !enabled;
+        document.getElementById('openConfigBtn').disabled = !enabled;
+        document.getElementById('btn-filtrar').disabled = !enabled;
+    }
+
+
     // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
     async function initializeFirebase() {
         
-        // 1. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO ANTES DE INICIALIZAR (NOVO)
+        // Desabilita botões preventivamente
+        setControlsEnabled(false);
+
+        // 1. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO ANTES DE INICIALIZAR
         if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
-            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida. Não é possível iniciar o app.");
-            showNotification("ERRO FATAL: Configuração do Firebase ausente/inválida. Botões desativados.", 'error');
+            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida.");
+            showNotification("ERRO FATAL: Configuração do Firebase ausente/inválida. App desativado.", 'error');
             return;
         }
 
@@ -657,16 +674,14 @@
                 console.log("Firebase Auth e Firestore prontos. User ID:", userId);
                 document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
                 
-                // Habilitar botões após a autenticação
-                document.getElementById('openModalBtn').disabled = false;
-                document.getElementById('openConfigBtn').disabled = false;
-                document.getElementById('btn-filtrar').disabled = false;
+                // Habilitar botões após a autenticação BEM SUCEDIDA
+                setControlsEnabled(true);
                 
                 // 4. Inicia os listeners de dados
                 startFirestoreListeners(userId);
                 showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
             } else {
-                console.error("Erro na autenticação. Ops, sem usuário!");
+                console.error("Erro na autenticação. Usuário não encontrado.");
                 showNotification("Erro na autenticação do Firebase. Recarregue a página.", 'error');
             }
 
@@ -674,7 +689,8 @@
             // Captura erros comuns de inicialização/autenticação
             console.error("Erro ao inicializar Firebase ou Autenticar:", error);
             const errorCode = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
-            showNotification(`Falha: ${errorCode}. Botões desativados.`, 'error');
+            showNotification(`Falha na Inicialização: ${errorCode}. App desativado.`, 'error');
+            setControlsEnabled(false); // Garante que fiquem desabilitados
         }
     }
 
@@ -682,15 +698,16 @@
     // === 5. LISTENERS DO FIRESTORE (TEMPO REAL) ===
 
     function startFirestoreListeners(uid) {
-        // --- Listener de Metas (Configurações) ---
+        // --- Listener 1: Metas (Configurações) ---
         onSnapshot(doc(db, CONFIG_DOC_PATH(uid)), (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const newMetas = docSnapshot.data();
                 metasConfig = {
-                    meta_matricula: newMetas.meta_matricula || 400,
-                    meta_rematricula: newMetas.meta_rematricula || 773,
-                    meta_total: newMetas.meta_total || (newMetas.meta_matricula + newMetas.meta_rematricula)
+                    // Usando 0 como fallback para garantir que sejam números
+                    meta_matricula: Number(newMetas.meta_matricula) || 0,
+                    meta_rematricula: Number(newMetas.meta_rematricula) || 0
                 };
+                metasConfig.meta_total = metasConfig.meta_matricula + metasConfig.meta_rematricula;
                 
                 // Atualiza KPIs de Meta na tela
                 document.getElementById("kpi-meta-mat").textContent = metasConfig.meta_matricula;
@@ -698,23 +715,24 @@
 
                 // Recarrega dashboard com a nova meta e o último registro
                 carregarDadosNaTela(ultimoRegistro);
-                console.log("Metas atualizadas em tempo real:", metasConfig);
             } else {
-                console.log("Documento de Metas não encontrado. Usando padrões. Tentando salvar o padrão...");
+                console.log("Documento de Metas não encontrado. Usando padrões e salvando...");
                 // Se não existir, salva o padrão inicial
                 setDoc(doc(db, CONFIG_DOC_PATH(uid)), metasConfig, { merge: true }).catch(e => console.error("Erro ao salvar metas padrão:", e));
             }
         }, (error) => {
             console.error("Erro no Listener de Metas:", error);
-            showNotification("Erro ao sincronizar Metas (Acesso Negado ou Rede).", 'error');
+            if (error.code === 'permission-denied') {
+                showNotification("ERRO CRÍTICO: Permissão Negada para ler Metas. Verifique suas Regras.", 'error');
+            } else {
+                showNotification("Erro ao sincronizar Metas (Rede ou Acesso).", 'error');
+            }
         });
 
-        // --- Listener de Último Registro Diário ---
-        // Busca apenas o último registro (ordenado por data decrescente)
+        // --- Listener 2: Último Registro Diário ---
         const q = query(
             collection(db, DAILY_COLLECTION_PATH(uid)),
-            // O campo data_id (YYYY-MM-DD) é usado para ordenar e garantir que o último seja o mais recente
-            orderBy("data_id", "desc"),
+            orderBy("data_id", "desc"), // Ordena pela string YYYY-MM-DD
             limit(1)
         );
 
@@ -723,7 +741,6 @@
                 const latestDoc = snapshot.docs[0];
                 ultimoRegistro = latestDoc.data();
                 carregarDadosNaTela(ultimoRegistro);
-                showNotification(`Dashboard atualizado com o registro de ${ultimoRegistro.data_display}.`, 'info');
             } else {
                 ultimoRegistro = null;
                 carregarDadosNaTela(null);
@@ -731,7 +748,11 @@
             }
         }, (error) => {
             console.error("Erro no Listener de Registros Diários:", error);
-            showNotification("Erro ao sincronizar Registros Diários (Acesso Negado ou Rede).", 'error');
+            if (error.code === 'permission-denied') {
+                showNotification("ERRO CRÍTICO: Permissão Negada para ler Registros. Verifique suas Regras.", 'error');
+            } else {
+                showNotification("Erro ao sincronizar Registros Diários (Rede ou Acesso).", 'error');
+            }
         });
     }
 
@@ -740,30 +761,42 @@
     function carregarDadosNaTela(dados) {
         let totalAtivos = 0;
         let progresso = 0;
-        const kpiProgressoCard = document.querySelector('.kpi-card-progresso');
+        const progressoBar = document.getElementById('progresso-bar');
 
         if (dados) {
-            // Soma o total de ativos
-            // Usando Number() para garantir que todos os valores sejam tratados como números
-            const ativa = Number(dados.ativa) || 0;
-            const formando = Number(dados.formando) || 0;
-            const ath_calouros = Number(dados.ath_calouros) || 0;
-            const ath_veterano = Number(dados.ath_veterano) || 0;
-            const calouro_ext = Number(dados.calouro_ext) || 0;
+            // 1. SOMA TOTAL DE ATIVOS E VALIDAÇÃO DE NÚMEROS
+            const getNum = (key) => Number(dados[key]) || 0;
+
+            const ativa = getNum('ativa');
+            const formando = getNum('formando');
+            const ath_calouros = getNum('ath_calouros');
+            const ath_veterano = getNum('ath_veterano');
+            const calouro_ext = getNum('calouro_ext');
 
             totalAtivos = ativa + formando + ath_calouros + ath_veterano + calouro_ext;
             
-            // Calcula o progresso (com metaTotal garantido em metasConfig)
-            progresso = metasConfig.meta_total > 0 ? 
-                        Math.round((totalAtivos / metasConfig.meta_total) * 100) : 0;
+            // 2. CÁLCULO DE PROGRESSO (USANDO meta_total em memória)
+            if (metasConfig.meta_total > 0) {
+                progresso = Math.round((totalAtivos / metasConfig.meta_total) * 100);
+            }
             
-            // Atualizar Gráficos Detalhados
-            document.getElementById("chart-financeiro-adimplentes").textContent = `${dados.adimplente} Adimplentes | ${dados.inadimplente} Inadimplentes`;
-            document.getElementById("chart-documentacao-regular").textContent = `${dados.doc_regular} Regulares | ${dados.doc_irre} Irregulares`;
-            document.getElementById("chart-modalidade-semi").textContent = `${dados.semipresencial} Semi | ${dados.online_100} Online`;
+            // 3. ATUALIZAR GRÁFICOS DETALHADOS
+            const adimplentes = getNum('adimplente');
+            const inadimplentes = getNum('inadimplente');
+            const doc_regular = getNum('doc_regular');
+            const doc_irre = getNum('doc_irre');
+            const semipresencial = getNum('semipresencial');
+            const online_100 = getNum('online_100');
+            const trancada = getNum('trancada');
+            const cancelada = getNum('cancelada');
+            const nao_efet_mat = getNum('nao_efet_mat');
+
+            document.getElementById("chart-financeiro-adimplentes").textContent = `${adimplentes} Adimplentes | ${inadimplentes} Inadimplentes`;
+            document.getElementById("chart-documentacao-regular").textContent = `${doc_regular} Regulares | ${doc_irre} Irregulares`;
+            document.getElementById("chart-modalidade-semi").textContent = `${semipresencial} Semi | ${online_100} Online`;
             
-            const totalEvasao = Number(dados.trancada) + Number(dados.cancelada) + Number(dados.nao_efet_mat);
-            document.getElementById("chart-evasao-trancada").textContent = `${totalEvasao} Evasão | T:${dados.trancada} C:${dados.cancelada}`;
+            const totalEvasao = trancada + cancelada + nao_efet_mat;
+            document.getElementById("chart-evasao-trancada").textContent = `${totalEvasao} Evasão | T:${trancada} C:${cancelada}`;
             
             document.getElementById("chart-data-registro").textContent = `Data: ${dados.data_display}`;
             
@@ -775,16 +808,16 @@
             document.getElementById("chart-documentacao-regular").textContent = `0 Regulares | 0 Irregulares`;
             document.getElementById("chart-modalidade-semi").textContent = `0 Semi | 0 Online`;
             document.getElementById("chart-evasao-trancada").textContent = `0 Evasão | T:0 C:0`;
-            document.getElementById("chart-data-registro").textContent = `Data: Não Registrado`;
+            // Não zera kpi-meta-mat e kpi-meta-remat pois eles vêm da configuração
             document.getElementById("chart-status-ativos").textContent = `N/A Status`;
         }
 
-        // 1. Atualizar KPIs principais (sempre atualiza, mesmo que dados seja null)
+        // 4. Atualizar KPIs principais (sempre atualiza, mesmo que dados seja null)
         document.getElementById("kpi-ativos").textContent = totalAtivos;
         document.getElementById("kpi-progresso").textContent = `${progresso}%`;
         
-        // Atualiza a barra de progresso visual
-        kpiProgressoCard.style.setProperty('--progresso-width', `${Math.min(progresso, 100)}%`);
+        // 5. Atualiza a barra de progresso visual (usando o elemento específico)
+        progressoBar.style.width = `${Math.min(progresso, 100)}%`;
 
         console.log(`Dados carregados na tela. Ativos: ${totalAtivos}, Progresso: ${progresso}%`);
     }
@@ -835,24 +868,26 @@
         submitBtn.disabled = true;
 
         // Captura de dados do formulário (Garantir que sejam números inteiros)
+        const getFormValue = (id) => parseInt(document.getElementById(id).value) || 0;
+
         const formData = {
             data_id: dataId,
             data_display: dataDisplay,
-            timestamp: Date.now(), // Para controle de versão
-            adimplente: parseInt(document.getElementById("input-adimplente").value) || 0,
-            inadimplente: parseInt(document.getElementById("input-inadimplente").value) || 0,
-            ativa: parseInt(document.getElementById("input-ativa").value) || 0,
-            formando: parseInt(document.getElementById("input-formando").value) || 0,
-            doc_regular: parseInt(document.getElementById("input-doc-reg").value) || 0,
-            doc_irre: parseInt(document.getElementById("input-doc-irre").value) || 0,
-            ath_calouros: parseInt(document.getElementById("input-ath-calouros").value) || 0,
-            ath_veterano: parseInt(document.getElementById("input-ath-veterano").value) || 0,
-            calouro_ext: parseInt(document.getElementById("input-calouro-ext").value) || 0,
-            semipresencial: parseInt(document.getElementById("input-semipresencial").value) || 0,
-            online_100: parseInt(document.getElementById("input-100-online").value) || 0,
-            trancada: parseInt(document.getElementById("input-trancada").value) || 0,
-            cancelada: parseInt(document.getElementById("input-cancelada").value) || 0,
-            nao_efet_mat: parseInt(document.getElementById("input-nao-efet").value) || 0
+            timestamp: Date.now(), 
+            adimplente: getFormValue("input-adimplente"),
+            inadimplente: getFormValue("input-inadimplente"),
+            ativa: getFormValue("input-ativa"),
+            formando: getFormValue("input-formando"),
+            doc_regular: getFormValue("input-doc-reg"),
+            doc_irre: getFormValue("input-doc-irre"),
+            ath_calouros: getFormValue("input-ath-calouros"),
+            ath_veterano: getFormValue("input-ath-veterano"),
+            calouro_ext: getFormValue("input-calouro-ext"),
+            semipresencial: getFormValue("input-semipresencial"),
+            online_100: getFormValue("input-100-online"),
+            trancada: getFormValue("input-trancada"),
+            cancelada: getFormValue("input-cancelada"),
+            nao_efet_mat: getFormValue("input-nao-efet")
         };
 
         try {
@@ -927,6 +962,7 @@
 
         try {
             const docRef = doc(db, CONFIG_DOC_PATH(userId));
+            // O setDoc aqui acionará o Listener de Metas, que irá recalcular tudo na tela.
             await setDoc(docRef, configData);
 
             showNotification(`Metas atualizadas com sucesso! Total: ${newTotal}.`, 'success');
@@ -975,6 +1011,7 @@
                 showNotification(`Dados do dia ${dadosFiltrados.data_display} carregados com sucesso.`, 'success');
             } else {
                 carregarDadosNaTela(null); // Limpa a tela
+                document.getElementById("chart-data-registro").textContent = 'Data: Nenhum Registro Encontrado';
                 showNotification(`Nenhum registro encontrado para a data: ${dataSelecionada}.`, 'info');
             }
         } catch (error) {
