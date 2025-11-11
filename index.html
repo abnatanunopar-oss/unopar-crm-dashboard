@@ -548,7 +548,19 @@
     let isAuthReady = false;
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    
+    // Tenta obter e parsear a configuração do Firebase de forma segura
+    let firebaseConfig = {};
+    try {
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            firebaseConfig = JSON.parse(__firebase_config);
+        }
+    } catch (e) {
+        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. A string JSON pode estar inválida.", e);
+        showNotification("Erro de Configuração. Verifique o console.", 'error');
+        // Mantém firebaseConfig como objeto vazio
+    }
+
     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
     // Caminhos Firestore
@@ -622,6 +634,13 @@
 
     // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
     async function initializeFirebase() {
+        // Verifica se a configuração é válida antes de tentar inicializar
+        if (Object.keys(firebaseConfig).length === 0) {
+            console.warn("A configuração do Firebase está vazia ou inválida. Inicialização cancelada.");
+            showNotification("Aviso: Configuração do Firebase ausente/inválida. Funcionalidades de DB desativadas.", 'error');
+            return;
+        }
+
         try {
             // 1. Inicializa o App
             const app = initializeApp(firebaseConfig);
@@ -652,8 +671,10 @@
             }
 
         } catch (error) {
-            console.error("Erro fatal ao inicializar Firebase:", error);
-            showNotification("Erro fatal ao inicializar o app.", 'error');
+            console.error("Erro fatal ao inicializar Firebase. Detalhe:", error);
+            // Captura erros comuns de inicialização/autenticação
+            const errorMessage = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
+            showNotification(`Erro fatal ao inicializar o app. ${errorMessage}`, 'error');
         }
     }
 
@@ -679,13 +700,13 @@
                 carregarDadosNaTela(ultimoRegistro);
                 console.log("Metas atualizadas em tempo real:", metasConfig);
             } else {
-                console.log("Documento de Metas não encontrado. Usando padrões.");
+                console.log("Documento de Metas não encontrado. Usando padrões. Tentando salvar o padrão...");
                 // Se não existir, salva o padrão inicial
-                setDoc(doc(db, CONFIG_DOC_PATH(uid)), metasConfig).catch(e => console.error("Erro ao salvar metas padrão:", e));
+                setDoc(doc(db, CONFIG_DOC_PATH(uid)), metasConfig, { merge: true }).catch(e => console.error("Erro ao salvar metas padrão:", e));
             }
         }, (error) => {
             console.error("Erro no Listener de Metas:", error);
-            showNotification("Erro ao sincronizar Metas.", 'error');
+            showNotification("Erro ao sincronizar Metas (Acesso Negado ou Rede).", 'error');
         });
 
         // --- Listener de Último Registro Diário ---
@@ -710,7 +731,7 @@
             }
         }, (error) => {
             console.error("Erro no Listener de Registros Diários:", error);
-            showNotification("Erro ao sincronizar Registros Diários.", 'error');
+            showNotification("Erro ao sincronizar Registros Diários (Acesso Negado ou Rede).", 'error');
         });
     }
 
@@ -793,7 +814,6 @@
         document.getElementById('saveDataBtn').disabled = false;
         
         // Limpa os campos do formulário ao abrir (exceto datas)
-        // Isso é importante para evitar a persistência de valores se o modal for fechado e reaberto
         dataForm.reset(); 
     }
 
@@ -841,11 +861,13 @@
             
             showNotification(`Registro de ${dataDisplay} salvo com sucesso no Firestore!`, 'success');
             dataModal.style.display = "none";
-            // Não faz reset aqui, pois o onSnapshot vai atualizar o dashboard e o último registro
 
         } catch (error) {
             console.error('Erro ao salvar o registro diário:', error);
-            showNotification("ERRO: Não foi possível salvar o registro no banco de dados. Verifique as regras de segurança.", 'error');
+            const errorMessage = error.code && error.code === 'permission-denied' ? 
+                                 'ERRO: Permissão negada. Verifique suas Regras de Segurança.' : 
+                                 'ERRO: Não foi possível salvar o registro no banco de dados. Verifique as regras de segurança.';
+            showNotification(errorMessage, 'error');
         } finally {
             submitBtn.textContent = 'Salvar Registro';
             submitBtn.disabled = false;
@@ -911,7 +933,10 @@
             configModal.style.display = "none";
         } catch (error) {
             console.error('Erro ao salvar a configuração:', error);
-            showNotification("ERRO: Não foi possível salvar as configurações. Verifique as regras de segurança.", 'error');
+            const errorMessage = error.code && error.code === 'permission-denied' ? 
+                                 'ERRO: Permissão negada. Verifique suas Regras de Segurança.' : 
+                                 'ERRO: Não foi possível salvar as configurações. Verifique as regras de segurança.';
+            showNotification(errorMessage, 'error');
         } finally {
             submitBtn.textContent = 'Salvar Configuração';
             submitBtn.disabled = false;
@@ -954,7 +979,10 @@
             }
         } catch (error) {
             console.error('Erro ao buscar registro por data:', error);
-            showNotification("Erro ao buscar dados históricos. Verifique o console.", 'error');
+            const errorMessage = error.code && error.code === 'permission-denied' ? 
+                                 'ERRO: Permissão negada ao buscar histórico.' : 
+                                 'Erro ao buscar dados históricos. Verifique o console.';
+            showNotification(errorMessage, 'error');
         } finally {
             btnFiltrar.disabled = false;
             btnFiltrar.textContent = 'Filtrar';
