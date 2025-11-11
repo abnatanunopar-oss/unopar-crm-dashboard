@@ -392,198 +392,202 @@
 <!-- TELA DE ERRO CRÍTICO (VISÍVEL APENAS NA FALHA DE INICIALIZAÇÃO) -->
 <div id="critical-error-screen">
     <h2>❌ ERRO FATAL DE INICIALIZAÇÃO DO FIREBASE ❌</h2>
-    <p>O aplicativo não conseguiu estabelecer a conexão com o banco de dados. Isso geralmente ocorre devido a uma **falha na injeção das credenciais** do Firebase pelo ambiente (Teams).</p>
+    <p>O aplicativo não conseguiu estabelecer a conexão com o banco de dados. Isso geralmente ocorre devido a uma **falha na injeção ou validade das credenciais** do Firebase pelo ambiente (Teams).</p>
     <p>O aplicativo tentou inicializar com a seguinte configuração:</p>
     <pre id="error-config-display">Carregando...</pre>
-    <p>Ação Necessária: Contacte o suporte técnico e compartilhe o conteúdo acima.</p>
+    <p>Ação Necessária: Copie o conteúdo acima e compartilhe com o suporte técnico para verificar a configuração do Firebase.</p>
 </div>
 <!-- FIM TELA DE ERRO CRÍTICO -->
 
 
-<div class="dashboard-container">
-    
-    <div class="main-header">
-        <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-            <!-- SVG UNOPAR (Adaptado) -->
-            <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
-            <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
-        </svg>
-        <h1>CRM Operacional - Unidade Recife <span style="font-size: 0.7em; color: #6c757d;" id="current-user-id"></span></h1>
-    </div>
-
-    <div class="header-controls">
-        <div class="date-filter-group">
-            <label for="data-filtro">Buscar Registro por Data:</label>
-            <input type="date" id="data-filtro">
-            <button id="btn-filtrar" class="btn-filter" disabled>Filtrar</button>
-        </div>
-        <button id="openConfigBtn" class="btn-config" disabled>⚙️ Configurações de Metas</button>
-    </div>
-
-    <div class="kpi-grid">
-        <div class="kpi-card kpi-card-ativos">
-            <div class="kpi-value" id="kpi-ativos">0</div>
-            <div class="kpi-label">Total de Alunos Ativos</div>
-        </div>
-        <div class="kpi-card kpi-card-meta-mat">
-            <div class="kpi-value" id="kpi-meta-mat">400</div>
-            <div class="kpi-label">META MATRÍCULA</div>
-        </div>
-        <div class="kpi-card kpi-card-meta-remat">
-            <div class="kpi-value" id="kpi-meta-remat">773</div>
-            <div class="kpi-label">META REMATRÍCULA</div>
-        </div>
-        <div class="kpi-card kpi-card-progresso">
-            <div class="progress-bar-overlay" id="progresso-bar" style="width: 0%;"></div>
-            <div class="kpi-value" id="kpi-progresso">0%</div>
-            <div class="kpi-label">Progresso da Meta Total</div>
-        </div>
-    </div>
-
-    <h2 class="group-title">Análise Detalhada (Último Registro)</h2>
-    <div class="chart-section">
+<!-- INÍCIO DO APLICATIVO PRINCIPAL (ESCONDIDO ATÉ A CONEXÃO) -->
+<div id="dashboard-app" style="display: none;">
+    <div class="dashboard-container">
         
-        <div class="chart-placeholder">
-            <h3 id="chart-financeiro-adimplentes">N/A Adimplentes</h3>
-            <p>Situação Financeira (Adimplentes / Inadimplentes)</p>
-        </div>
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-documentacao-regular">N/A Regulares</h3>
-            <p>Documentação (Regular / Irregular)</p>
-        </div>
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-modalidade-semi">N/A Semipresencial</h3>
-            <p>Modalidade (Semipresencial / Online)</p>
-        </div>
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-evasao-trancada">N/A Trancadas</h3>
-            <p>Evasão (Trancada, Cancelada, Não Efetivação)</p>
+        <div class="main-header">
+            <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                <!-- SVG UNOPAR (Adaptado) -->
+                <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
+                <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
+            </svg>
+            <h1>CRM Operacional - Unidade Recife <span style="font-size: 0.7em; color: #6c757d;" id="current-user-id"></span></h1>
         </div>
 
-        <div class="chart-placeholder">
-            <h3 id="chart-data-registro">Data: Não Registrado</h3>
-            <p>Último Registro de Dados</p>
+        <div class="header-controls">
+            <div class="date-filter-group">
+                <label for="data-filtro">Buscar Registro por Data:</label>
+                <input type="date" id="data-filtro">
+                <button id="btn-filtrar" class="btn-filter" disabled>Filtrar</button>
+            </div>
+            <button id="openConfigBtn" class="btn-config" disabled>⚙️ Configurações de Metas</button>
         </div>
 
-        <div class="chart-placeholder">
-            <h3 id="chart-status-ativos">N/A Status</h3>
-            <p>Status de Ativos (ATH, Calouros, Formandos)</p>
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-card-ativos">
+                <div class="kpi-value" id="kpi-ativos">0</div>
+                <div class="kpi-label">Total de Alunos Ativos</div>
+            </div>
+            <div class="kpi-card kpi-card-meta-mat">
+                <div class="kpi-value" id="kpi-meta-mat">400</div>
+                <div class="kpi-label">META MATRÍCULA</div>
+            </div>
+            <div class="kpi-card kpi-card-meta-remat">
+                <div class="kpi-value" id="kpi-meta-remat">773</div>
+                <div class="kpi-label">META REMATRÍCULA</div>
+            </div>
+            <div class="kpi-card kpi-card-progresso">
+                <div class="progress-bar-overlay" id="progresso-bar" style="width: 0%;"></div>
+                <div class="kpi-value" id="kpi-progresso">0%</div>
+                <div class="kpi-label">Progresso da Meta Total</div>
+            </div>
         </div>
-    </div>
-</div>
 
-<button class="btn-insert" id="openModalBtn" disabled>➕ Inserir Dados Diários</button>
-
-<div id="dataModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn data-close-btn">&times;</span>
-        <h2 class="form-title">Registro Diário de Métricas</h2>
-        <form id="dataForm">
-            <div class="form-group-section-simple">
-                <!-- Coluna 1 -->
-                <div style="grid-column: 1 / 2;">
-                    <div class="form-group">
-                        <label for="input-data-display">Data do Registro</label>
-                        <input type="text" id="input-data-display" name="data_display" readonly>
-                        <input type="hidden" id="input-data-firestore" name="data_firestore">
-                    </div>
-                    <!-- Financeiro -->
-                    <div class="form-group">
-                        <label for="input-adimplente">ADIMPLEMTE</label>
-                        <input type="number" id="input-adimplente" name="adimplente" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-inadimplente">INADIMPLENTE</label>
-                        <input type="number" id="input-inadimplente" name="inadimplente" value="0" min="0" required>
-                    </div>
-                    <!-- Status do Aluno -->
-                    <div class="form-group">
-                        <label for="input-ativa">ATIVA</label>
-                        <input type="number" id="input-ativa" name="ativa" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-formando">FORMANDO</label>
-                        <input type="number" id="input-formando" name="formando" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-ath-calouros">ATH/calouros</label>
-                        <input type="number" id="input-ath-calouros" name="ath_calouros" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-ath-veterano">ATH/Veterano</label>
-                        <input type="number" id="input-ath-veterano" name="ath_veterano" value="0" min="0" required>
-                    </div>
-                </div>
-
-                <!-- Coluna 2 -->
-                <div style="grid-column: 2 / 3;">
-                    <!-- Documentação -->
-                    <div class="form-group">
-                        <label for="input-doc-reg">DOC REGULAR</label>
-                        <input type="number" id="input-doc-reg" name="doc_regular" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-doc-irre">DOC IRREGULAR</label>
-                        <input type="number" id="input-doc-irre" name="doc_irre" value="0" min="0" required>
-                    </div>
-                    <!-- Modalidade -->
-                    <div class="form-group">
-                        <label for="input-semipresencial">SEMIPRESENCIAL</label>
-                        <input type="number" id="input-semipresencial" name="semipresencial" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-100-online">100% ONLINE</label>
-                        <input type="number" id="input-100-online" name="online_100" value="0" min="0" required>
-                    </div>
-                    <!-- Evasão/Não Efetivação -->
-                    <div class="form-group">
-                        <label for="input-trancada">TRANCADA</label>
-                        <input type="number" id="input-trancada" name="trancada" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-cancelada">CANCELADA</label>
-                        <input type="number" id="input-cancelada" name="cancelada" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-nao-efet">NÃO EFET. MATRÍCULA</label>
-                        <input type="number" id="input-nao-efet" name="nao_efet_mat" value="0" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-calouro-ext">CALOURO/ext</label>
-                        <input type="number" id="input-calouro-ext" name="calouro_ext" value="0" min="0" required>
-                    </div>
-                </div>
+        <h2 class="group-title">Análise Detalhada (Último Registro)</h2>
+        <div class="chart-section">
+            
+            <div class="chart-placeholder">
+                <h3 id="chart-financeiro-adimplentes">N/A Adimplentes</h3>
+                <p>Situação Financeira (Adimplentes / Inadimplentes)</p>
             </div>
             
-            <button type="submit" class="form-submit-btn" id="saveDataBtn">Salvar Registro</button>
-        </form>
-    </div>
-</div>
+            <div class="chart-placeholder">
+                <h3 id="chart-documentacao-regular">N/A Regulares</h3>
+                <p>Documentação (Regular / Irregular)</p>
+            </div>
+            
+            <div class="chart-placeholder">
+                <h3 id="chart-modalidade-semi">N/A Semipresencial</h3>
+                <p>Modalidade (Semipresencial / Online)</p>
+            </div>
+            
+            <div class="chart-placeholder">
+                <h3 id="chart-evasao-trancada">N/A Trancadas</h3>
+                <p>Evasão (Trancada, Cancelada, Não Efetivação)</p>
+            </div>
 
-<div id="configModal" class="modal">
-    <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
-        <span class="close-btn config-close-btn">&times;</span>
-        <h2 class="form-title">Configuração de Metas</h2>
-        <form id="configForm">
-            <div class="form-group">
-                <label for="config-meta-mat">Meta Matrícula</label>
-                <input type="number" id="config-meta-mat" name="meta_matricula" min="0" required>
+            <div class="chart-placeholder">
+                <h3 id="chart-data-registro">Data: Não Registrado</h3>
+                <p>Último Registro de Dados</p>
             </div>
-            <div class="form-group">
-                <label for="config-meta-remat">Meta Rematrícula</label>
-                <input type="number" id="config-meta-remat" name="meta_rematricula" min="0" required>
+
+            <div class="chart-placeholder">
+                <h3 id="chart-status-ativos">N/A Status</h3>
+                <p>Status de Ativos (ATH, Calouros, Formandos)</p>
             </div>
-            <div class="form-group">
-                <label for="config-meta-total">Meta Total (Calculado automaticamente)</label>
-                <input type="number" id="config-meta-total" name="meta_total" min="0" readonly>
-            </div>
-            <button type="submit" class="form-submit-btn" id="saveConfigBtn">Salvar Configuração</button>
-        </form>
+        </div>
+    </div>
+
+    <button class="btn-insert" id="openModalBtn" disabled>➕ Inserir Dados Diários</button>
+
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn data-close-btn">&times;</span>
+            <h2 class="form-title">Registro Diário de Métricas</h2>
+            <form id="dataForm">
+                <div class="form-group-section-simple">
+                    <!-- Coluna 1 -->
+                    <div style="grid-column: 1 / 2;">
+                        <div class="form-group">
+                            <label for="input-data-display">Data do Registro</label>
+                            <input type="text" id="input-data-display" name="data_display" readonly>
+                            <input type="hidden" id="input-data-firestore" name="data_firestore">
+                        </div>
+                        <!-- Financeiro -->
+                        <div class="form-group">
+                            <label for="input-adimplente">ADIMPLEMTE</label>
+                            <input type="number" id="input-adimplente" name="adimplente" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-inadimplente">INADIMPLENTE</label>
+                            <input type="number" id="input-inadimplente" name="inadimplente" value="0" min="0" required>
+                        </div>
+                        <!-- Status do Aluno -->
+                        <div class="form-group">
+                            <label for="input-ativa">ATIVA</label>
+                            <input type="number" id="input-ativa" name="ativa" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-formando">FORMANDO</label>
+                            <input type="number" id="input-formando" name="formando" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-ath-calouros">ATH/calouros</label>
+                            <input type="number" id="input-ath-calouros" name="ath_calouros" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-ath-veterano">ATH/Veterano</label>
+                            <input type="number" id="input-ath-veterano" name="ath_veterano" value="0" min="0" required>
+                        </div>
+                    </div>
+
+                    <!-- Coluna 2 -->
+                    <div style="grid-column: 2 / 3;">
+                        <!-- Documentação -->
+                        <div class="form-group">
+                            <label for="input-doc-reg">DOC REGULAR</label>
+                            <input type="number" id="input-doc-reg" name="doc_regular" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-doc-irre">DOC IRREGULAR</label>
+                            <input type="number" id="input-doc-irre" name="doc_irre" value="0" min="0" required>
+                        </div>
+                        <!-- Modalidade -->
+                        <div class="form-group">
+                            <label for="input-semipresencial">SEMIPRESENCIAL</label>
+                            <input type="number" id="input-semipresencial" name="semipresencial" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-100-online">100% ONLINE</label>
+                            <input type="number" id="input-100-online" name="online_100" value="0" min="0" required>
+                        </div>
+                        <!-- Evasão/Não Efetivação -->
+                        <div class="form-group">
+                            <label for="input-trancada">TRANCADA</label>
+                            <input type="number" id="input-trancada" name="trancada" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-cancelada">CANCELADA</label>
+                            <input type="number" id="input-cancelada" name="cancelada" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-nao-efet">NÃO EFET. MATRÍCULA</label>
+                            <input type="number" id="input-nao-efet" name="nao_efet_mat" value="0" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-calouro-ext">CALOURO/ext</label>
+                            <input type="number" id="input-calouro-ext" name="calouro_ext" value="0" min="0" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="form-submit-btn" id="saveDataBtn">Salvar Registro</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="configModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
+            <span class="close-btn config-close-btn">&times;</span>
+            <h2 class="form-title">Configuração de Metas</h2>
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="config-meta-mat">Meta Matrícula</label>
+                    <input type="number" id="config-meta-mat" name="meta_matricula" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="config-meta-remat">Meta Rematrícula</label>
+                    <input type="number" id="config-meta-remat" name="meta_rematricula" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="config-meta-total">Meta Total (Calculado automaticamente)</label>
+                    <input type="number" id="config-meta-total" name="meta_total" min="0" readonly>
+                </div>
+                <button type="submit" class="form-submit-btn" id="saveConfigBtn">Salvar Configuração</button>
+            </form>
+        </div>
     </div>
 </div>
+<!-- FIM DO APLICATIVO PRINCIPAL -->
 
 <script type="module">
     // === 1. IMPORTS DO FIREBASE ===
@@ -606,30 +610,28 @@
     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
     const injectedConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
-    let firebaseConfig = null; // Começa como nulo para forçar a verificação estrita
+    let firebaseConfig = null; // Começa como nulo
     let configSource = 'Ausente/Inválida';
 
     // Tenta obter e parsear a configuração real do Firebase, se disponível.
     try {
-        // Verifica se a string existe, não é 'null', 'undefined' e não é vazia.
-        if (injectedConfigString && injectedConfigString !== 'null' && injectedConfigString !== 'undefined' && injectedConfigString.trim() !== '') {
-            const injectedConfig = JSON.parse(injectedConfigString);
+        if (injectedConfigString && injectedConfigString.trim() !== '' && injectedConfigString !== 'null' && injectedConfigString !== 'undefined') {
+            const tempConfig = JSON.parse(injectedConfigString);
             
-            // Verifica se a configuração injetada tem o mínimo necessário para ser válida
-            if (injectedConfig.apiKey && injectedConfig.projectId && injectedConfig.authDomain) {
-                firebaseConfig = injectedConfig;
+            // Verifica se a configuração injetada tem o mínimo necessário para ser considerada "válida" (sintaticamente)
+            if (tempConfig.apiKey && tempConfig.projectId) {
+                firebaseConfig = tempConfig;
                 configSource = 'Injetada (Teams/Canvas)';
-                console.log("SUCESSO: Usando Configuração do Firebase Injetada.");
+                console.log("SUCESSO: Configuração injetada e JSON lido.");
             } else {
-                 console.error("ERRO CRÍTICO: Configuração injetada, mas incompleta. Inicialização não será tentada.");
-                 // firebaseConfig permanece null
+                 configSource = 'Injetada, mas incompleta (faltando apiKey ou projectId)';
             }
         } else {
             console.error("ERRO CRÍTICO: Configuração do Firebase não injetada ou vazia.");
         }
     } catch (e) {
-        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. Inicialização não será tentada.", e);
-        // firebaseConfig permanece null
+        configSource = `Falha ao Decodificar JSON: ${e.message}`;
+        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config.", e);
     }
     
     // Caminhos Firestore
@@ -680,23 +682,28 @@
     /**
      * Função para mostrar o Erro Crítico na Tela
      * @param {string} errorMessage - Mensagem de erro.
-     * @param {object} displayData - Dados de debug para exibir no PRE.
+     * @param {object} attemptedConfig - Configuração do Firebase que foi usada (ou tentada).
      */
-    function showCriticalErrorScreen(errorMessage, displayData) {
+    function showCriticalErrorScreen(errorMessage, attemptedConfig) {
         const screen = document.getElementById('critical-error-screen');
         const configDisplay = document.getElementById('error-config-display');
         
-        // CUIDADO: Ofusca apenas no display do PRE para não expor a tela.
-        const display = {
+        // CUIDADO: Ofusca dados sensíveis para não expor acidentalmente o token na tela (embora o token nunca devesse ser exposto).
+        const displayData = {
             'Configuração de Origem': configSource,
             'App ID do Canvas': appId,
             'Token Inicial de Auth': initialAuthToken ? initialAuthToken.substring(0, 8) + '...' : 'NÃO INJETADO',
-            'Mensagem de Erro': errorMessage,
-            'Dados de Debug': displayData
+            'Mensagem de Erro (SDK)': errorMessage,
+            'Configuração Tentada': attemptedConfig 
+                ? JSON.stringify({ ...attemptedConfig, apiKey: attemptedConfig.apiKey ? attemptedConfig.apiKey.substring(0, 4) + '...' : 'N/A' }, null, 2)
+                : 'Configuração Injetada Estava Nula ou Inválida.'
         }
-
-        configDisplay.textContent = JSON.stringify(display, null, 2);
         
+        // Remove a string do Firebase para a tela de erro customizada
+        configDisplay.textContent = JSON.stringify(displayData, null, 2);
+        
+        // Esconde o app principal e mostra a tela de erro
+        document.getElementById('dashboard-app').style.display = 'none';
         screen.style.display = 'block';
     }
 
@@ -739,24 +746,22 @@
     // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
     async function initializeFirebase() {
         
-        // Desabilita botões preventivamente
+        // Desabilita botões preventivamente e esconde a dashboard
         setControlsEnabled(false);
+        document.getElementById('dashboard-app').style.display = 'none';
 
-        // 1. VERIFICAÇÃO CRÍTICA: Se firebaseConfig ainda for null, o ambiente falhou.
+        // 1. VERIFICAÇÃO CRÍTICA: Se firebaseConfig for null neste ponto, o JSON falhou na leitura/estrutura mínima.
         if (!firebaseConfig) {
-            const errorMsg = "Configuração do Firebase ausente ou inválida. O ambiente do Teams falhou ao fornecer as credenciais necessárias. Não é possível inicializar o Firebase.";
-            console.error("ERRO FATAL:", errorMsg);
+            const errorMsg = "Configuração do Firebase não pôde ser lida. Credenciais ausentes ou JSON inválido.";
+            console.error("ERRO FATAL (Pré-SDK):", errorMsg);
             
             // Exibir a tela de erro fatal sem tentar a inicialização do Firebase SDK
-            showCriticalErrorScreen(errorMsg, {
-                Causa_Provavel: "A variável __firebase_config não foi fornecida corretamente pelo Canvas.",
-                Acao: "Verifique se o seu ambiente está configurado com as credenciais do Firebase."
-            });
+            showCriticalErrorScreen(errorMsg, firebaseConfig); // firebaseConfig será null aqui
             return;
         }
 
         try {
-            // 2. Inicializa o App (firebaseConfig agora é garantido ser válido)
+            // 2. Inicializa o App (firebaseConfig agora é garantido ser sintaticamente válido)
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -786,8 +791,9 @@
                 console.log("Firebase Auth e Firestore prontos. User ID:", userId);
                 document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
                 
-                // Oculta a tela de erro e habilita botões
+                // Oculta a tela de erro e habilita botões e mostra a dashboard
                 document.getElementById('critical-error-screen').style.display = 'none';
+                document.getElementById('dashboard-app').style.display = 'block';
                 setControlsEnabled(true);
                 
                 // 5. Inicia os listeners de dados
@@ -795,14 +801,14 @@
                 showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
             } else {
                 // Isso só deve acontecer se signInAnonymously falhar por algum motivo
-                console.error("Erro na autenticação. Usuário não encontrado após tentativas.");
-                showCriticalErrorScreen("Falha na Autenticação (Anônima e Customizada).", firebaseConfig);
+                throw new Error("Falha na autenticação. Usuário não encontrado após tentativas.");
             }
 
         } catch (error) {
-            // Captura erros gerais de inicialização/autenticação, usando o config válido que tentamos usar
+            // Captura erros gerais de inicialização/autenticação, incluindo a falha "auth/api-key-not-valid"
             console.error("Erro CRÍTICO ao inicializar Firebase ou Autenticar:", error);
             const errorMessage = error.code ? `Erro Código: ${error.code} - ${error.message}` : error.toString();
+            // Esta chamada vai exibir o erro, usando a configuração (funcionalmente inválida) que tentamos usar
             showCriticalErrorScreen(`Erro de Inicialização do SDK: ${errorMessage}`, firebaseConfig);
             setControlsEnabled(false); 
         }
