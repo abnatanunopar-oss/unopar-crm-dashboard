@@ -389,7 +389,7 @@
 
 <div id="toast-container"></div>
 
-<!-- NOVO: TELA DE ERRO CRÍTICO (VISÍVEL APENAS NA FALHA DE INICIALIZAÇÃO) -->
+<!-- TELA DE ERRO CRÍTICO (VISÍVEL APENAS NA FALHA DE INICIALIZAÇÃO) -->
 <div id="critical-error-screen">
     <h2>❌ ERRO FATAL DE INICIALIZAÇÃO DO FIREBASE ❌</h2>
     <p>O aplicativo não conseguiu estabelecer a conexão com o banco de dados. Isso geralmente ocorre devido a uma **falha na injeção das credenciais** do Firebase pelo ambiente (Teams).</p>
@@ -606,39 +606,30 @@
     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
     const injectedConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
-    // Credenciais de FALLBACK (Configuração mínima para inicialização anônima)
-    const FALLBACK_CONFIG = {
-        apiKey: "FALLBACK_API_KEY_ANONYMOUS_ONLY", 
-        authDomain: `${appId}.firebaseapp.com`,
-        projectId: appId, 
-        storageBucket: `${appId}.appspot.com`,
-        messagingSenderId: "123456789012",
-        appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0"
-    };
-
-    let firebaseConfig = FALLBACK_CONFIG; // Valor padrão de fallback
-    let configSource = 'Padrão (Fallback)';
+    let firebaseConfig = null; // Começa como nulo para forçar a verificação estrita
+    let configSource = 'Ausente/Inválida';
 
     // Tenta obter e parsear a configuração real do Firebase, se disponível.
     try {
-        if (injectedConfigString && injectedConfigString !== 'null' && injectedConfigString !== 'undefined') {
+        // Verifica se a string existe, não é 'null', 'undefined' e não é vazia.
+        if (injectedConfigString && injectedConfigString !== 'null' && injectedConfigString !== 'undefined' && injectedConfigString.trim() !== '') {
             const injectedConfig = JSON.parse(injectedConfigString);
-            // Verifica se a configuração injetada parece razoável antes de usar
-            if (injectedConfig.apiKey && injectedConfig.projectId) {
+            
+            // Verifica se a configuração injetada tem o mínimo necessário para ser válida
+            if (injectedConfig.apiKey && injectedConfig.projectId && injectedConfig.authDomain) {
                 firebaseConfig = injectedConfig;
                 configSource = 'Injetada (Teams/Canvas)';
                 console.log("SUCESSO: Usando Configuração do Firebase Injetada.");
             } else {
-                 console.warn("ALERTA: Configuração injetada, mas incompleta. Usando Fallback.");
+                 console.error("ERRO CRÍTICO: Configuração injetada, mas incompleta. Inicialização não será tentada.");
+                 // firebaseConfig permanece null
             }
         } else {
-            console.warn("ALERTA: Configuração do Firebase não injetada ou vazia. Usando Fallback.");
+            console.error("ERRO CRÍTICO: Configuração do Firebase não injetada ou vazia.");
         }
     } catch (e) {
-        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. Usando Fallback.", e);
-        // Garante que o fallback seja usado em caso de JSON malformado
-        firebaseConfig = FALLBACK_CONFIG;
-        configSource = `Fallback (Erro de JSON: ${e.message.substring(0, 50)}...)`;
+        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. Inicialização não será tentada.", e);
+        // firebaseConfig permanece null
     }
     
     // Caminhos Firestore
@@ -689,23 +680,22 @@
     /**
      * Função para mostrar o Erro Crítico na Tela
      * @param {string} errorMessage - Mensagem de erro.
-     * @param {object} config - Configuração tentada.
+     * @param {object} displayData - Dados de debug para exibir no PRE.
      */
-    function showCriticalErrorScreen(errorMessage, config) {
+    function showCriticalErrorScreen(errorMessage, displayData) {
         const screen = document.getElementById('critical-error-screen');
         const configDisplay = document.getElementById('error-config-display');
         
-        // Obfuscate sensitive data for display
-        const displayConfig = {
-            ...config,
-            apiKey: config.apiKey ? config.apiKey.substring(0, 8) + '...' : 'NÃO FORNECIDA',
-            appId: config.appId ? config.appId.substring(0, 10) + '...' : 'NÃO FORNECIDA',
-            token: initialAuthToken ? initialAuthToken.substring(0, 8) + '...' : 'NÃO INJETADO'
-        };
+        // CUIDADO: Ofusca apenas no display do PRE para não expor a tela.
+        const display = {
+            'Configuração de Origem': configSource,
+            'App ID do Canvas': appId,
+            'Token Inicial de Auth': initialAuthToken ? initialAuthToken.substring(0, 8) + '...' : 'NÃO INJETADO',
+            'Mensagem de Erro': errorMessage,
+            'Dados de Debug': displayData
+        }
 
-        configDisplay.textContent = `Origem da Configuração: ${configSource}\n`;
-        configDisplay.textContent += `Mensagem de Erro: ${errorMessage}\n\n`;
-        configDisplay.textContent += JSON.stringify(displayConfig, null, 2);
+        configDisplay.textContent = JSON.stringify(display, null, 2);
         
         screen.style.display = 'block';
     }
@@ -752,15 +742,21 @@
         // Desabilita botões preventivamente
         setControlsEnabled(false);
 
-        // 1. VERIFICAÇÃO CRÍTICA FINAL DA CONFIGURAÇÃO
-        if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida.");
-            showCriticalErrorScreen("Chave API ou Project ID ausente na configuração final.", firebaseConfig);
+        // 1. VERIFICAÇÃO CRÍTICA: Se firebaseConfig ainda for null, o ambiente falhou.
+        if (!firebaseConfig) {
+            const errorMsg = "Configuração do Firebase ausente ou inválida. O ambiente do Teams falhou ao fornecer as credenciais necessárias. Não é possível inicializar o Firebase.";
+            console.error("ERRO FATAL:", errorMsg);
+            
+            // Exibir a tela de erro fatal sem tentar a inicialização do Firebase SDK
+            showCriticalErrorScreen(errorMsg, {
+                Causa_Provavel: "A variável __firebase_config não foi fornecida corretamente pelo Canvas.",
+                Acao: "Verifique se o seu ambiente está configurado com as credenciais do Firebase."
+            });
             return;
         }
 
         try {
-            // 2. Inicializa o App
+            // 2. Inicializa o App (firebaseConfig agora é garantido ser válido)
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -804,10 +800,10 @@
             }
 
         } catch (error) {
-            // Captura erros gerais de inicialização/autenticação
+            // Captura erros gerais de inicialização/autenticação, usando o config válido que tentamos usar
             console.error("Erro CRÍTICO ao inicializar Firebase ou Autenticar:", error);
             const errorMessage = error.code ? `Erro Código: ${error.code} - ${error.message}` : error.toString();
-            showCriticalErrorScreen(errorMessage, firebaseConfig);
+            showCriticalErrorScreen(`Erro de Inicialização do SDK: ${errorMessage}`, firebaseConfig);
             setControlsEnabled(false); 
         }
     }
