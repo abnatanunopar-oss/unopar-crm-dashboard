@@ -1,586 +1,859 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNOPAR CRM Dashboard - Unidade Recife</title>
-    <style>
-        /* DEFINIÇÃO DE CORES UNOPAR */
-        :root {
-            --unopar-blue-dark: #1E3799; /* Azul Principal Forte */
-            --unopar-orange-accent: #FF8F00; /* Laranja/Amarelo de Destaque */
-            --background-light: #f0f2f5;
-            --text-dark: #343a40;
-            --success-green: #28a745;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNOPAR CRM Dashboard - Unidade Recife</title>
+    <style>
+        /* DEFINIÇÃO DE CORES UNOPAR */
+        :root {
+            --unopar-blue-dark: #1E3799; /* Azul Principal Forte */
+            --unopar-orange-accent: #FF8F00; /* Laranja/Amarelo de Destaque */
+            --background-light: #f0f2f5;
+            --text-dark: #343a40;
+            --success-green: #28a745;
+            --danger-red: #dc3545;
+        }
 
-        /* RESET & BASE */
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--background-light);
-            margin: 0;
-            padding: 0;
-            overflow-y: hidden; 
-        }
-        .dashboard-container {
-            max-width: 1300px;
-            margin: 20px auto; 
-            padding: 10px 20px;
-            height: calc(100vh - 40px);
-            overflow-y: auto; 
-        }
+        /* RESET & BASE */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            overflow-y: hidden; 
+        }
+        .dashboard-container {
+            max-width: 1300px;
+            margin: 20px auto; 
+            padding: 10px 20px;
+            height: calc(100vh - 40px);
+            overflow-y: auto; 
+            box-sizing: border-box;
+        }
 
-        /* HEADER & LOGO ALINHAMENTO */
-        .main-header {
-            display: flex; 
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 3px solid var(--unopar-orange-accent); /* Linha de acento UNOPAR */
-            padding-bottom: 5px;
-        }
-        .main-header h1 {
-            color: var(--unopar-blue-dark);
-            font-weight: 700;
-            margin: 0; 
-            font-size: 1.8em;
-        }
-        /* ESTILO PARA LOGO SVG "U" */
-        .logo-svg {
-            height: 40px; /* Tamanho da logo, ajuste se necessário */
-            width: 40px;
-            margin-right: 15px; 
-            /* Para garantir que o SVG use as cores definidas: */
-        }
-        .logo-svg .u-blue {
-            fill: var(--unopar-blue-dark);
-        }
-        .logo-svg .u-orange {
-            fill: var(--unopar-orange-accent);
-        }
-        /* FIM: HEADER & LOGO ALINHAMENTO */
+        /* HEADER & LOGO ALINHAMENTO */
+        .main-header {
+            display: flex; 
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--unopar-orange-accent); /* Linha de acento UNOPAR */
+            padding-bottom: 5px;
+        }
+        .main-header h1 {
+            color: var(--unopar-blue-dark);
+            font-weight: 700;
+            margin: 0; 
+            font-size: 1.8em;
+        }
+        /* ESTILO PARA LOGO SVG "U" */
+        .logo-svg {
+            height: 40px; 
+            width: 40px;
+            margin-right: 15px; 
+        }
+        .logo-svg .u-blue {
+            fill: var(--unopar-blue-dark);
+        }
+        .logo-svg .u-orange {
+            fill: var(--unopar-orange-accent);
+        }
 
-        /* FILTROS E CONFIGURAÇÕES */
-        .header-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .date-filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .date-filter-group label {
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-        .date-filter-group input {
-            padding: 8px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-        }
-        /* Botão de Filtro - AZUL UNOPAR */
-        .btn-filter {
-            background-color: var(--unopar-blue-dark);
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .btn-filter:hover {
-            background-color: #1a2e7a;
-        }
-        /* Botão de Configuração - Cinza Profissional */
-        .btn-config {
-            background-color: #6c757d; 
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .btn-config:hover {
-            background-color: #5a6268;
-        }
-        h2.group-title {
-            color: var(--text-dark);
-            font-size: 1.2em;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--unopar-orange-accent); /* Destaque Laranja */
-            padding-left: 10px;
-        }
+        /* FILTROS E CONFIGURAÇÕES */
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap; /* Responsividade básica */
+            gap: 15px;
+        }
+        .date-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .date-filter-group label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        .date-filter-group input {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+        }
+        /* Botão de Filtro - AZUL UNOPAR */
+        .btn-filter, .btn-config, .form-submit-btn, .btn-insert {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            font-weight: 600;
+        }
+        .btn-filter {
+            background-color: var(--unopar-blue-dark);
+            color: white;
+        }
+        .btn-filter:hover { background-color: #1a2e7a; }
+        .btn-filter:disabled { background-color: #a0a0a0; cursor: not-allowed; }
 
-        /* KPIs */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px; 
-            margin-bottom: 20px;
-        }
-        .kpi-card {
-            background: #ffffff;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
-        }
-        .kpi-value {
-            font-size: 2.2em;
-            font-weight: 700;
-            color: var(--unopar-blue-dark); /* Valores em Azul UNOPAR */
-            margin-bottom: 2px;
-        }
-        .kpi-label {
-            font-size: 0.85em;
-            color: #6c757d;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        /* Bordas dos KPIs */
-        .kpi-card-ativos { border-left: 4px solid var(--unopar-blue-dark); }
-        .kpi-card-meta-mat { border-left: 4px solid var(--success-green); } /* Manter verde para Sucesso/Meta Matrícula */
-        .kpi-card-meta-remat { border-left: 4px solid var(--unopar-orange-accent); } /* Laranja para Rematrícula */
-        .kpi-card-progresso { background-color: #e9f5e9; border-left: 4px solid #17a2b8; } /* Azul claro para progresso */
+        /* Botão de Configuração - Cinza Profissional */
+        .btn-config {
+            background-color: #6c757d; 
+            color: white;
+            padding: 10px 20px;
+        }
+        .btn-config:hover { background-color: #5a6268; }
+        
+        h2.group-title {
+            color: var(--text-dark);
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--unopar-orange-accent); /* Destaque Laranja */
+            padding-left: 10px;
+        }
 
+        /* KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .kpi-value {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--unopar-blue-dark); 
+            margin-bottom: 2px;
+        }
+        .kpi-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        /* Bordas dos KPIs */
+        .kpi-card-ativos { border-left: 4px solid var(--unopar-blue-dark); }
+        .kpi-card-meta-mat { border-left: 4px solid var(--success-green); } 
+        .kpi-card-meta-remat { border-left: 4px solid var(--unopar-orange-accent); } 
+        .kpi-card-progresso { 
+            background-color: #e9f5e9; 
+            border-left: 4px solid #17a2b8; /* Cor de progresso */
+            position: relative;
+            overflow: hidden;
+        }
+        /* Barra de progresso visual */
+        .kpi-card-progresso::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: var(--progresso-width, 0%);
+            background: linear-gradient(90deg, #17a2b840, transparent);
+            z-index: 1;
+            transition: width 0.5s ease-out;
+        }
+        .kpi-card-progresso .kpi-value,
+        .kpi-card-progresso .kpi-label {
+            position: relative;
+            z-index: 2; /* Garante que o texto fique acima da barra */
+        }
+        .kpi-card-ativos, .kpi-card-meta-mat, .kpi-card-meta-remat {
+            border-radius: 8px; /* Aplica o arredondamento para todos */
+        }
 
-        /* GRÁFICOS (Mantido o estilo limpo) */
-        .chart-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .chart-placeholder {
-            background-color: #ffffff;
-            height: 250px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-            color: #333;
-            padding: 15px;
-        }
-        .chart-placeholder h3 { font-size: 1em; margin: 0; padding: 0; color: var(--unopar-blue-dark); }
-        .chart-placeholder p { font-size: 0.8em; color: #6c757d; margin-top: 5px; }
+        /* GRÁFICOS */
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .chart-placeholder {
+            background-color: #ffffff;
+            height: 250px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            color: #333;
+            padding: 15px;
+            border-bottom: 4px solid var(--unopar-blue-dark);
+        }
+        .chart-placeholder h3 { font-size: 1.2em; margin: 0; padding: 0; color: var(--unopar-blue-dark); }
+        .chart-placeholder p { font-size: 0.9em; color: #6c757d; margin-top: 5px; }
 
+        /* BOTÃO FLUTUANTE */
+        .btn-insert {
+            position: fixed;
+            bottom: 20px; 
+            right: 20px; 
+            background-color: var(--unopar-orange-accent); 
+            color: var(--unopar-blue-dark); 
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: 700; 
+            box-shadow: 0 4px 12px rgba(255, 143, 0, 0.5);
+            z-index: 50;
+        }
+        .btn-insert:hover {
+            background-color: #e58100;
+            box-shadow: 0 6px 15px rgba(255, 143, 0, 0.6);
+        }
 
-        /* BOTÃO FLUTUANTE - LARANJA UNOPAR */
-        .btn-insert {
-            position: fixed;
-            bottom: 20px; 
-            right: 20px; 
-            background-color: var(--unopar-orange-accent); /* Laranja Principal */
-            color: var(--unopar-blue-dark); /* Texto no azul escuro para contraste */
-            padding: 12px 25px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: 700; /* Mais destaque */
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(255, 143, 0, 0.4);
-            transition: background-color 0.3s;
-            z-index: 50;
-        }
-        .btn-insert:hover {
-            background-color: #e58100;
-        }
+        /* MODAIS */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px); 
+            overflow-y: auto; 
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 5% auto; 
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px; 
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); 
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        /* MODAIS (Manter neutro para foco no conteúdo) */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.6);
-            backdrop-filter: blur(3px); 
-            overflow-y: auto; 
-        }
-        .modal-content {
-            background-color: #ffffff;
-            margin: 5% auto; 
-            padding: 30px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 600px; 
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); 
-            animation: slideIn 0.3s ease-out;
-        }
-        .form-title {
-            color: var(--unopar-blue-dark);
-            border-bottom: 2px solid #e0e0e0;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .form-group-section-simple {
-            display: grid;
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px 30px; 
-            margin-bottom: 20px;
-        }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-dark); }
-        .form-group input {
-            width: 100%;
-            padding: 10px; 
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus { border-color: var(--unopar-blue-dark); outline: none; box-shadow: 0 0 0 0.2rem rgba(30, 55, 153, 0.25); }
-        /* Botão de Submissão - AZUL UNOPAR */
-        .form-submit-btn {
-            background-color: var(--unopar-blue-dark);
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-        }
-        .form-submit-btn:hover {
-            background-color: #1a2e7a;
-        }
-        .close-btn { color: #aaa; float: right; font-size: 32px; font-weight: normal; transition: color 0.2s; cursor: pointer; }
-    </style>
+        .form-title {
+            color: var(--unopar-blue-dark);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group-section-simple {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px 30px; 
+            margin-bottom: 20px;
+        }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-dark); }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px; 
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--unopar-blue-dark); outline: none; box-shadow: 0 0 0 0.2rem rgba(30, 55, 153, 0.25); }
+        
+        .form-submit-btn {
+            background-color: var(--unopar-blue-dark);
+            color: white;
+            padding: 12px;
+            font-size: 1em;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .form-submit-btn:hover { background-color: #1a2e7a; }
+        .form-submit-btn:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        
+        .close-btn { color: #aaa; float: right; font-size: 32px; font-weight: normal; transition: color 0.2s; cursor: pointer; }
+        .close-btn:hover { color: #555; }
+
+        /* TOAST NOTIFICATION STYLES */
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+        }
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateX(100%);
+            min-width: 250px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast-icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+        .toast.success { background-color: var(--success-green); }
+        .toast.error { background-color: var(--danger-red); }
+        .toast.info { background-color: var(--unopar-blue-dark); }
+
+        /* Responsiveness */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 10px;
+                margin: 10px auto;
+            }
+            .main-header h1 {
+                font-size: 1.4em;
+            }
+            .header-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .date-filter-group {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            .kpi-grid, .chart-section {
+                grid-template-columns: 1fr;
+            }
+            .form-group-section-simple {
+                grid-template-columns: 1fr;
+            }
+            .btn-insert {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+        }
+    </style>
 </head>
 <body>
 
+<div id="toast-container"></div>
+
 <div class="dashboard-container">
-    
-    <div class="main-header">
-        <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-            <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
-            <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
-        </svg>
-        <h1>CRM Operacional - Unidade Recife</h1>
-    </div>
-    <div class="header-controls">
-        <div class="date-filter-group">
-            <label for="data-filtro">Buscar Registro por Data:</label>
-            <input type="date" id="data-filtro">
-            <button id="btn-filtrar" class="btn-filter">Filtrar</button>
-        </div>
-        <button id="openConfigBtn" class="btn-config">⚙️ Configurações de Metas</button>
-    </div>
+    
+    <div class="main-header">
+        <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <!-- SVG UNOPAR (Adaptado) -->
+            <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
+            <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
+        </svg>
+        <h1>CRM Operacional - Unidade Recife <span style="font-size: 0.7em; color: #6c757d;" id="current-user-id"></span></h1>
+    </div>
 
-    <div class="kpi-grid">
-        <div class="kpi-card kpi-card-ativos">
-            <div class="kpi-value" id="kpi-ativos">0</div>
-            <div class="kpi-label">Total de Alunos Ativos</div>
-        </div>
-        <div class="kpi-card kpi-card-meta-mat">
-            <div class="kpi-value" id="kpi-meta-mat">400</div>
-            <div class="kpi-label">META MATRÍCULA</div>
-        </div>
-        <div class="kpi-card kpi-card-meta-remat">
-            <div class="kpi-value" id="kpi-meta-remat">773</div>
-            <div class="kpi-label">META REMATRÍCULA</div>
-        </div>
-        <div class="kpi-card kpi-card-progresso">
-            <div class="kpi-value" id="kpi-progresso">0%</div>
-            <div class="kpi-label">Progresso da Meta Total</div>
-        </div>
-    </div>
+    <div class="header-controls">
+        <div class="date-filter-group">
+            <label for="data-filtro">Buscar Registro por Data:</label>
+            <input type="date" id="data-filtro">
+            <button id="btn-filtrar" class="btn-filter" disabled>Filtrar</button>
+        </div>
+        <button id="openConfigBtn" class="btn-config" disabled>⚙️ Configurações de Metas</button>
+    </div>
 
-    <h2 class="group-title">Análise Detalhada</h2>
-    <div class="chart-section">
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-financeiro-adimplentes">N/A Adimplentes</h3>
-            <p>Situação Financeira</p>
-        </div>
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-documentacao-regular">N/A Regulares</h3>
-            <p>Documentação</p>
-        </div>
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-modalidade-semi">N/A Semipresencial</h3>
-            <p>Modalidade</p>
-        </div>
-        
-        <div class="chart-placeholder">
-            <h3 id="chart-evasao-trancada">N/A Trancadas</h3>
-            <p>Evasão (Trancada, Cancelada, etc.)</p>
-        </div>
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-card-ativos">
+            <div class="kpi-value" id="kpi-ativos">0</div>
+            <div class="kpi-label">Total de Alunos Ativos</div>
+        </div>
+        <div class="kpi-card kpi-card-meta-mat">
+            <div class="kpi-value" id="kpi-meta-mat">400</div>
+            <div class="kpi-label">META MATRÍCULA</div>
+        </div>
+        <div class="kpi-card kpi-card-meta-remat">
+            <div class="kpi-value" id="kpi-meta-remat">773</div>
+            <div class="kpi-label">META REMATRÍCULA</div>
+        </div>
+        <div class="kpi-card kpi-card-progresso" style="--progresso-width: 0%;">
+            <div class="kpi-value" id="kpi-progresso">0%</div>
+            <div class="kpi-label">Progresso da Meta Total</div>
+        </div>
+    </div>
 
-        <div class="chart-placeholder">
-            <h3>Progressão de Metas</h3>
-            <p>Gráfico de Linha de Matrículas vs. Meta</p>
-        </div>
+    <h2 class="group-title">Análise Detalhada (Último Registro)</h2>
+    <div class="chart-section">
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-financeiro-adimplentes">N/A Adimplentes</h3>
+            <p>Situação Financeira (Adimplentes / Inadimplentes)</p>
+        </div>
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-documentacao-regular">N/A Regulares</h3>
+            <p>Documentação (Regular / Irregular)</p>
+        </div>
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-modalidade-semi">N/A Semipresencial</h3>
+            <p>Modalidade (Semipresencial / Online)</p>
+        </div>
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-evasao-trancada">N/A Trancadas</h3>
+            <p>Evasão (Trancada, Cancelada, Não Efetivação)</p>
+        </div>
 
-        <div class="chart-placeholder">
-            <h3>Status de Alunos</h3>
-            <p>ATH/calouros, ATH/Veterano, CALOURO/ext, ATIVA, FORMANDO</p>
-        </div>
-    </div>
+        <div class="chart-placeholder">
+            <h3 id="chart-data-registro">Data: Não Registrado</h3>
+            <p>Último Registro de Dados</p>
+        </div>
+
+        <div class="chart-placeholder">
+            <h3 id="chart-status-ativos">N/A Status</h3>
+            <p>Status de Ativos (ATH, Calouros, Formandos)</p>
+        </div>
+    </div>
 </div>
 
-<button class="btn-insert" id="openModalBtn">➕ Inserir Dados Diários</button>
+<button class="btn-insert" id="openModalBtn" disabled>➕ Inserir Dados Diários</button>
 
 <div id="dataModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn data-close-btn">&times;</span>
-        <h2 class="form-title">Registro Diário de Métricas (14 Campos Essenciais)</h2>
-        <form id="dataForm">
-            <div class="form-group-section-simple">
-                <div style="grid-column: 1 / 2;">
-                    <div class="form-group">
-                        <label for="input-data">Data do Registro</label>
-                        <input type="text" id="input-data" name="data" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-adimplente">ADIMPLEMTE</label>
-                        <input type="number" id="input-adimplente" name="adimplente" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-inadimplente">INADIMPLENTE</label>
-                        <input type="number" id="input-inadimplente" name="inadimplente" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-ativa">ATIVA</label>
-                        <input type="number" id="input-ativa" name="ativa" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-formando">FORMANDO</label>
-                        <input type="number" id="input-formando" name="formando" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-doc-reg">DOC REGULAR</label>
-                        <input type="number" id="input-doc-reg" name="doc_regular" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-doc-irre">DOC IRRE</label>
-                        <input type="number" id="input-doc-irre" name="doc_irre" value="0" required>
-                    </div>
-                </div>
+    <div class="modal-content">
+        <span class="close-btn data-close-btn">&times;</span>
+        <h2 class="form-title">Registro Diário de Métricas</h2>
+        <form id="dataForm">
+            <div class="form-group-section-simple">
+                <!-- Coluna 1 -->
+                <div style="grid-column: 1 / 2;">
+                    <div class="form-group">
+                        <label for="input-data-display">Data do Registro</label>
+                        <input type="text" id="input-data-display" name="data_display" readonly>
+                        <input type="hidden" id="input-data-firestore" name="data_firestore">
+                    </div>
+                    <!-- Financeiro -->
+                    <div class="form-group">
+                        <label for="input-adimplente">ADIMPLEMTE</label>
+                        <input type="number" id="input-adimplente" name="adimplente" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-inadimplente">INADIMPLENTE</label>
+                        <input type="number" id="input-inadimplente" name="inadimplente" value="0" min="0" required>
+                    </div>
+                    <!-- Status do Aluno -->
+                    <div class="form-group">
+                        <label for="input-ativa">ATIVA</label>
+                        <input type="number" id="input-ativa" name="ativa" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-formando">FORMANDO</label>
+                        <input type="number" id="input-formando" name="formando" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-ath-calouros">ATH/calouros</label>
+                        <input type="number" id="input-ath-calouros" name="ath_calouros" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-ath-veterano">ATH/Veterano</label>
+                        <input type="number" id="input-ath-veterano" name="ath_veterano" value="0" min="0" required>
+                    </div>
+                </div>
 
-                <div style="grid-column: 2 / 3;">
-                    <div class="form-group">
-                        <label for="input-ath-calouros">ATH/calouros</label>
-                        <input type="number" id="input-ath-calouros" name="ath_calouros" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-ath-veterano">ATH/Veterano</label>
-                        <input type="number" id="input-ath-veterano" name="ath_veterano" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-calouro-ext">CALOURO/ext</label>
-                        <input type="number" id="input-calouro-ext" name="calouro_ext" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-semipresencial">SEMIPRESENCIAL</label>
-                        <input type="number" id="input-semipresencial" name="semipresencial" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-100-online">100% ONLINE</label>
-                        <input type="number" id="input-100-online" name="online_100" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-trancada">TRANCADA</label>
-                        <input type="number" id="input-trancada" name="trancada" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-cancelada">CANCELADA</label>
-                        <input type="number" id="input-cancelada" name="cancelada" value="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="input-nao-efet">NÃO EFET. MATRÍCULA</label>
-                        <input type="number" id="input-nao-efet" name="nao_efet_mat" value="0" required>
-                    </div>
-                </div>
-            </div>
-            
-            <button type="submit" class="form-submit-btn">Salvar Registro</button>
-        </form>
-    </div>
+                <!-- Coluna 2 -->
+                <div style="grid-column: 2 / 3;">
+                    <!-- Documentação -->
+                    <div class="form-group">
+                        <label for="input-doc-reg">DOC REGULAR</label>
+                        <input type="number" id="input-doc-reg" name="doc_regular" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-doc-irre">DOC IRREGULAR</label>
+                        <input type="number" id="input-doc-irre" name="doc_irre" value="0" min="0" required>
+                    </div>
+                    <!-- Modalidade -->
+                    <div class="form-group">
+                        <label for="input-semipresencial">SEMIPRESENCIAL</label>
+                        <input type="number" id="input-semipresencial" name="semipresencial" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-100-online">100% ONLINE</label>
+                        <input type="number" id="input-100-online" name="online_100" value="0" min="0" required>
+                    </div>
+                    <!-- Evasão/Não Efetivação -->
+                    <div class="form-group">
+                        <label for="input-trancada">TRANCADA</label>
+                        <input type="number" id="input-trancada" name="trancada" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-cancelada">CANCELADA</label>
+                        <input type="number" id="input-cancelada" name="cancelada" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-nao-efet">NÃO EFET. MATRÍCULA</label>
+                        <input type="number" id="input-nao-efet" name="nao_efet_mat" value="0" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-calouro-ext">CALOURO/ext</label>
+                        <input type="number" id="input-calouro-ext" name="calouro_ext" value="0" min="0" required>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="form-submit-btn" id="saveDataBtn">Salvar Registro</button>
+        </form>
+    </div>
 </div>
 
 <div id="configModal" class="modal">
-    <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
-        <span class="close-btn config-close-btn">&times;</span>
-        <h2 class="form-title">Configuração de Metas</h2>
-        <form id="configForm">
-            <div class="form-group">
-                <label for="config-meta-mat">Meta Matrícula</label>
-                <input type="number" id="config-meta-mat" name="meta_matricula" value="400" required>
-            </div>
-            <div class="form-group">
-                <label for="config-meta-remat">Meta Rematrícula</label>
-                <input type="number" id="config-meta-remat" name="meta_rematricula" value="773" required>
-            </div>
-            <div class="form-group">
-                <label for="config-meta-total">Meta Total</label>
-                <input type="number" id="config-meta-total" name="meta_total" value="1173" required>
-            </div>
-            <button type="submit" class="form-submit-btn">Salvar Configuração</button>
-        </form>
-    </div>
+    <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
+        <span class="close-btn config-close-btn">&times;</span>
+        <h2 class="form-title">Configuração de Metas</h2>
+        <form id="configForm">
+            <div class="form-group">
+                <label for="config-meta-mat">Meta Matrícula</label>
+                <input type="number" id="config-meta-mat" name="meta_matricula" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="config-meta-remat">Meta Rematrícula</label>
+                <input type="number" id="config-meta-remat" name="meta_rematricula" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="config-meta-total">Meta Total (Calculado automaticamente)</label>
+                <input type="number" id="config-meta-total" name="meta_total" min="0" readonly>
+            </div>
+            <button type="submit" class="form-submit-btn" id="saveConfigBtn">Salvar Configuração</button>
+        </form>
+    </div>
 </div>
 
-<script>
-    // === 1. VARIÁVEIS DE DADOS (INICIAIS) ===
-    
-    // Configurações Globais (Metas) - Valores iniciais, podem ser alterados pelo modal
+<script type="module">
+    // === 1. IMPORTS DO FIREBASE ===
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Ativar logs do Firebase para debug (Obrigatório em ambientes Canvas)
+    setLogLevel('Debug');
+
+    // === 2. VARIÁVEIS GLOBAIS DO CANVAS & FIREBASE ===
+    let db;
+    let auth;
+    let userId = null;
+    let isAuthReady = false;
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // Caminhos Firestore
+    const CONFIG_DOC_PATH = (uid) => `artifacts/${appId}/users/${uid}/config/metas`;
+    const DAILY_COLLECTION_PATH = (uid) => `artifacts/${appId}/users/${uid}/registros_diarios`;
+
+    // Metas em memória
     let metasConfig = {
         meta_matricula: 400,
         meta_rematricula: 773,
         meta_total: 1173
     };
 
-    // Variável para armazenar os dados da última inserção
+    // Dados do último registro em memória
     let ultimoRegistro = null;
 
 
-    // Seletores
+    // === 3. FUNÇÕES DE UTILIDADE E UI ===
+
+    /**
+     * Função para exibir notificações Toast.
+     * @param {string} message - A mensagem a ser exibida.
+     * @param {'success'|'error'|'info'} type - O tipo de notificação.
+     */
+    function showNotification(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let icon = '';
+        if (type === 'success') icon = '✅';
+        else if (type === 'error') icon = '❌';
+        else icon = 'ℹ️';
+
+        toast.innerHTML = `<span class="toast-icon">${icon}</span> ${message}`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.classList.add('show');
+        }, 10); // Pequeno atraso para garantir a transição
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, 5000);
+    }
+
+    /**
+     * Formata a data de Date object para YYYY-MM-DD (Firestore ID).
+     * @param {Date} date - Objeto Date.
+     * @returns {string} - Data formatada (YYYY-MM-DD).
+     */
+    function formatDateID(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    /**
+     * Formata a data de Date object para DD/MM/YYYY (Display UI).
+     * @param {Date} date - Objeto Date.
+     * @returns {string} - Data formatada (DD/MM/YYYY).
+     */
+    function formatDateDisplay(date) {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
+    async function initializeFirebase() {
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            if (initialAuthToken) {
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                await signInAnonymously(auth);
+            }
+
+            // O listener onAuthStateChanged garante que a inicialização só prossiga após o login.
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isAuthReady = true;
+                    console.log("Firebase Auth e Firestore prontos. User ID:", userId);
+                    document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
+                    
+                    // Habilitar botões após a autenticação
+                    document.getElementById('openModalBtn').disabled = false;
+                    document.getElementById('openConfigBtn').disabled = false;
+                    document.getElementById('btn-filtrar').disabled = false;
+                    
+                    startFirestoreListeners(userId);
+                } else {
+                    console.error("Erro na autenticação. Ops, sem usuário!");
+                    showNotification("Erro de autenticação do Firebase. Recarregue a página.", 'error');
+                }
+            });
+
+        } catch (error) {
+            console.error("Erro fatal ao inicializar Firebase:", error);
+            showNotification("Erro fatal ao inicializar o app.", 'error');
+        }
+    }
+
+    // === 5. LISTENERS DO FIRESTORE (TEMPO REAL) ===
+
+    function startFirestoreListeners(uid) {
+        // --- Listener de Metas (Configurações) ---
+        onSnapshot(doc(db, CONFIG_DOC_PATH(uid)), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const newMetas = docSnapshot.data();
+                metasConfig = {
+                    meta_matricula: newMetas.meta_matricula || 400,
+                    meta_rematricula: newMetas.meta_rematricula || 773,
+                    meta_total: newMetas.meta_total || (newMetas.meta_matricula + newMetas.meta_rematricula)
+                };
+                
+                // Atualiza KPIs de Meta na tela
+                document.getElementById("kpi-meta-mat").textContent = metasConfig.meta_matricula;
+                document.getElementById("kpi-meta-remat").textContent = metasConfig.meta_rematricula;
+
+                // Recarrega dashboard com a nova meta e o último registro
+                carregarDadosNaTela(ultimoRegistro);
+                console.log("Metas atualizadas em tempo real:", metasConfig);
+            } else {
+                console.log("Documento de Metas não encontrado. Usando padrões.");
+                // Se não existir, salva o padrão inicial
+                setDoc(doc(db, CONFIG_DOC_PATH(uid)), metasConfig).catch(e => console.error("Erro ao salvar metas padrão:", e));
+            }
+        }, (error) => {
+            console.error("Erro no Listener de Metas:", error);
+            showNotification("Erro ao sincronizar Metas.", 'error');
+        });
+
+        // --- Listener de Último Registro Diário ---
+        // Busca apenas o último registro (ordenado por data decrescente)
+        const q = query(
+            collection(db, DAILY_COLLECTION_PATH(uid)),
+            // O campo data_id (YYYY-MM-DD) é usado para ordenar e garantir que o último seja o mais recente
+            orderBy("data_id", "desc"),
+            limit(1)
+        );
+
+        onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const latestDoc = snapshot.docs[0];
+                ultimoRegistro = latestDoc.data();
+                carregarDadosNaTela(ultimoRegistro);
+                showNotification(`Dashboard atualizado com o registro de ${ultimoRegistro.data_display}.`, 'info');
+            } else {
+                ultimoRegistro = null;
+                carregarDadosNaTela(null);
+                document.getElementById("chart-data-registro").textContent = 'Data: Nenhum Registro';
+            }
+        }, (error) => {
+            console.error("Erro no Listener de Registros Diários:", error);
+            showNotification("Erro ao sincronizar Registros Diários.", 'error');
+        });
+    }
+
+    // === 6. FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO ===
+
+    function carregarDadosNaTela(dados) {
+        let totalAtivos = 0;
+        let progresso = 0;
+        const kpiProgressoCard = document.querySelector('.kpi-card-progresso');
+
+        if (dados) {
+            // Soma o total de ativos
+            totalAtivos = dados.ativa + dados.formando + dados.ath_calouros + dados.ath_veterano + dados.calouro_ext;
+            
+            // Calcula o progresso (com metaTotal garantido em metasConfig)
+            progresso = metasConfig.meta_total > 0 ? 
+                        Math.round((totalAtivos / metasConfig.meta_total) * 100) : 0;
+            
+            // Atualizar Gráficos Detalhados
+            document.getElementById("chart-financeiro-adimplentes").textContent = `${dados.adimplente} Adimplentes | ${dados.inadimplente} Inadimplentes`;
+            document.getElementById("chart-documentacao-regular").textContent = `${dados.doc_regular} Regulares | ${dados.doc_irre} Irregulares`;
+            document.getElementById("chart-modalidade-semi").textContent = `${dados.semipresencial} Semi | ${dados.online_100} Online`;
+            
+            const totalEvasao = dados.trancada + dados.cancelada + dados.nao_efet_mat;
+            document.getElementById("chart-evasao-trancada").textContent = `${totalEvasao} Evasão | T:${dados.trancada} C:${dados.cancelada}`;
+            
+            document.getElementById("chart-data-registro").textContent = `Data: ${dados.data_display}`;
+            
+            document.getElementById("chart-status-ativos").textContent = `ATH:${dados.ath_calouros + dados.ath_veterano} | Ativa:${dados.ativa} | Formando:${dados.formando}`;
+
+        } else {
+            // Se não houver dados, zera as visualizações
+            document.getElementById("chart-financeiro-adimplentes").textContent = `0 Adimplentes | 0 Inadimplentes`;
+            document.getElementById("chart-documentacao-regular").textContent = `0 Regulares | 0 Irregulares`;
+            document.getElementById("chart-modalidade-semi").textContent = `0 Semi | 0 Online`;
+            document.getElementById("chart-evasao-trancada").textContent = `0 Evasão | T:0 C:0`;
+            document.getElementById("chart-data-registro").textContent = `Data: Não Registrado`;
+            document.getElementById("chart-status-ativos").textContent = `N/A Status`;
+        }
+
+        // 1. Atualizar KPIs principais (sempre atualiza, mesmo que dados seja null)
+        document.getElementById("kpi-ativos").textContent = totalAtivos;
+        document.getElementById("kpi-progresso").textContent = `${progresso}%`;
+        
+        // Atualiza a barra de progresso visual
+        kpiProgressoCard.style.setProperty('--progresso-width', `${Math.min(progresso, 100)}%`);
+
+        console.log(`Dados carregados na tela. Ativos: ${totalAtivos}, Progresso: ${progresso}%`);
+    }
+
+    // === 7. LÓGICA DO MODAL DE DADOS DIÁRIOS ===
     const dataModal = document.getElementById("dataModal");
     const openDataBtn = document.getElementById("openModalBtn");
     const dataCloseBtn = document.getElementsByClassName("data-close-btn")[0];
-    const inputData = document.getElementById("input-data");
     const dataForm = document.getElementById("dataForm");
+    const inputDataDisplay = document.getElementById("input-data-display");
+    const inputDataFirestore = document.getElementById("input-data-firestore");
 
-    const configModal = document.getElementById("configModal");
-    const openConfigBtn = document.getElementById("openConfigBtn");
-    const configCloseBtn = document.getElementsByClassName("config-close-btn")[0];
-    const configForm = document.getElementById("configForm");
-    
-    const btnFiltrar = document.getElementById("btn-filtrar");
-    const inputFiltroData = document.getElementById("data-filtro");
-
-    // Função principal para carregar os dados na tela
-    function carregarDadosNaTela(dados) {
-        
-        if (!dados) {
-            // Se não houver dados, zera os valores (apenas na inicialização)
-            document.getElementById("kpi-ativos").textContent = "0"; 
-            document.getElementById("kpi-progresso").textContent = "0%";
-            document.getElementById("chart-financeiro-adimplentes").textContent = `N/A Adimplentes`;
-            document.getElementById("chart-documentacao-regular").textContent = `N/A Regulares`;
-            document.getElementById("chart-modalidade-semi").textContent = `N/A Semipresencial`;
-            document.getElementById("chart-evasao-trancada").textContent = `N/A Trancadas`;
-            return;
-        }
-
-        const totalAtivos = dados.ativa + dados.formando + dados.ath_calouros + dados.ath_veterano + dados.calouro_ext;
-        
-        // 1. Atualizar KPIs principais
-        document.getElementById("kpi-ativos").textContent = totalAtivos;
-        
-        const progresso = Math.round((totalAtivos / metasConfig.meta_total) * 100);
-        document.getElementById("kpi-progresso").textContent = `${progresso}%`;
-        
-        // 2. Atualizar Gráficos (Simulando o título)
-        document.getElementById("chart-financeiro-adimplentes").textContent = `${dados.adimplente} Adimplentes`;
-        document.getElementById("chart-documentacao-regular").textContent = `${dados.doc_regular} Regulares`;
-        document.getElementById("chart-modalidade-semi").textContent = `${dados.semipresencial} Semipresencial`;
-        document.getElementById("chart-evasao-trancada").textContent = `${dados.trancada} Trancadas`;
-
-        console.log(`Dados carregados:`, dados);
-    }
-    
-    // Carrega o dashboard no estado inicial (todos zeros)
-    window.onload = function() {
-        carregarDadosNaTela(null);
-    };
-
-    // === LÓGICA DO MODAL DE DADOS DIÁRIOS ===
     openDataBtn.onclick = function() {
-        dataModal.style.display = "block";
-        
-        // Preenche a data de hoje automaticamente (DD/MM/AAAA)
         const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        inputData.value = `${dd}/${mm}/${yyyy}`; 
+        // Preenche a data no formato de exibição (DD/MM/YYYY)
+        inputDataDisplay.value = formatDateDisplay(today);
+        // Preenche a data no formato de ID (YYYY-MM-DD)
+        inputDataFirestore.value = formatDateID(today);
+        
+        dataModal.style.display = "block";
+        document.getElementById('saveDataBtn').textContent = 'Salvar Registro';
+        document.getElementById('saveDataBtn').disabled = false;
     }
 
     dataCloseBtn.onclick = function() { dataModal.style.display = "none"; }
 
-    // ************************************************************
-    // *** FUNÇÃO DE SUBMISSÃO FINAL (CONEXÃO COM POWER AUTOMATE) ***
-    // ************************************************************
-    dataForm.onsubmit = function(event) {
+    dataForm.onsubmit = async function(event) {
         event.preventDefault();
         
-        const dataString = inputData.value;
-        
+        if (!isAuthReady || !userId) {
+            showNotification("Aguarde a inicialização do Firebase.", 'error');
+            return;
+        }
+
+        const dataId = inputDataFirestore.value; // YYYY-MM-DD
+        const dataDisplay = inputDataDisplay.value; // DD/MM/YYYY
+
+        const submitBtn = document.getElementById('saveDataBtn');
+        submitBtn.textContent = 'Salvando...';
+        submitBtn.disabled = true;
+
         // Captura de dados do formulário
         const formData = {
-            data: dataString, 
-            adimplente: parseInt(document.getElementById("input-adimplente").value),
-            inadimplente: parseInt(document.getElementById("input-inadimplente").value),
-            ativa: parseInt(document.getElementById("input-ativa").value),
-            formando: parseInt(document.getElementById("input-formando").value),
-            doc_regular: parseInt(document.getElementById("input-doc-reg").value),
-            doc_irre: parseInt(document.getElementById("input-doc-irre").value),
-            ath_calouros: parseInt(document.getElementById("input-ath-calouros").value),
-            ath_veterano: parseInt(document.getElementById("input-ath-veterano").value),
-            calouro_ext: parseInt(document.getElementById("input-calouro-ext").value),
-            semipresencial: parseInt(document.getElementById("input-semipresencial").value),
-            online_150: parseInt(document.getElementById("input-100-online").value),
-            trancada: parseInt(document.getElementById("input-trancada").value),
-            cancelada: parseInt(document.getElementById("input-cancelada").value),
-            nao_efet_mat: parseInt(document.getElementById("input-nao-efet").value)
+            data_id: dataId,
+            data_display: dataDisplay,
+            timestamp: Date.now(), // Para controle de versão
+            adimplente: parseInt(document.getElementById("input-adimplente").value) || 0,
+            inadimplente: parseInt(document.getElementById("input-inadimplente").value) || 0,
+            ativa: parseInt(document.getElementById("input-ativa").value) || 0,
+            formando: parseInt(document.getElementById("input-formando").value) || 0,
+            doc_regular: parseInt(document.getElementById("input-doc-reg").value) || 0,
+            doc_irre: parseInt(document.getElementById("input-doc-irre").value) || 0,
+            ath_calouros: parseInt(document.getElementById("input-ath-calouros").value) || 0,
+            ath_veterano: parseInt(document.getElementById("input-ath-veterano").value) || 0,
+            calouro_ext: parseInt(document.getElementById("input-calouro-ext").value) || 0,
+            semipresencial: parseInt(document.getElementById("input-semipresencial").value) || 0,
+            online_100: parseInt(document.getElementById("input-100-online").value) || 0,
+            trancada: parseInt(document.getElementById("input-trancada").value) || 0,
+            cancelada: parseInt(document.getElementById("input-cancelada").value) || 0,
+            nao_efet_mat: parseInt(document.getElementById("input-nao-efet").value) || 0
         };
 
-        // 🔴 FLOW_URL: SEU LINK DO POWER AUTOMATE
-        const FLOW_URL = "https://default54201d3b316c4ecb96b9acf6d4ee97.9b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/09ceb609cfff416982ffd4a33bf4fc17/triggers/manual/paths/invoke?api-version=1"; 
+        try {
+            const docRef = doc(db, DAILY_COLLECTION_PATH(userId), dataId);
+            await setDoc(docRef, formData);
+            
+            showNotification(`Registro de ${dataDisplay} salvo com sucesso no Firestore!`, 'success');
+            dataModal.style.display = "none";
+            dataForm.reset();
 
-        // 1. Altera o botão para dar feedback ao usuário
-        document.querySelector('.form-submit-btn').textContent = 'Salvando no Excel...';
-        document.querySelector('.form-submit-btn').disabled = true;
-
-        // 2. Envia os dados para o Power Automate
-        fetch(FLOW_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            // Verifica se a resposta do Power Automate foi 202 (Aceita com Sucesso)
-            if (response.status === 202) {
-                alert(`SUCESSO! Registro Diário do dia ${dataString} SALVO PERMANENTEMENTE no Excel.`);
-                
-                // Ações de sucesso (atualiza dashboard, fecha modal)
-                ultimoRegistro = formData; 
-                carregarDadosNaTela(ultimoRegistro);
-                dataForm.reset();
-                dataModal.style.display = "none";
-            } else {
-                alert("ERRO: O Power Automate respondeu, mas não salvou. Verifique o fluxo.");
-            }
-        })
-        .catch(error => {
-            console.error('Erro de rede ou conexão:', error);
-            alert("ERRO de conexão. Não foi possível enviar para o Power Automate.");
-        })
-        .finally(() => {
-            // 3. Restaura o botão (independente do resultado)
-            document.querySelector('.form-submit-btn').textContent = 'Salvar Registro';
-            document.querySelector('.form-submit-btn').disabled = false;
-        });
+        } catch (error) {
+            console.error('Erro ao salvar o registro diário:', error);
+            showNotification("ERRO: Não foi possível salvar o registro no banco de dados.", 'error');
+        } finally {
+            submitBtn.textContent = 'Salvar Registro';
+            submitBtn.disabled = false;
+        }
     }
 
 
-    // === LÓGICA DO MODAL DE CONFIGURAÇÃO ===
+    // === 8. LÓGICA DO MODAL DE CONFIGURAÇÃO (METAS) ===
+    const configModal = document.getElementById("configModal");
+    const openConfigBtn = document.getElementById("openConfigBtn");
+    const configCloseBtn = document.getElementsByClassName("config-close-btn")[0];
+    const configForm = document.getElementById("configForm");
+
+    // Recalcula o total quando os campos de matrícula/rematrícula mudam
+    document.getElementById("config-meta-mat").oninput = 
+    document.getElementById("config-meta-remat").oninput = function() {
+        const mat = parseInt(document.getElementById("config-meta-mat").value) || 0;
+        const remat = parseInt(document.getElementById("config-meta-remat").value) || 0;
+        document.getElementById("config-meta-total").value = mat + remat;
+    };
+
     openConfigBtn.onclick = function() {
-        // Preenche o formulário de config com os valores atuais antes de abrir
+        // Preenche o formulário com os valores atuais antes de abrir
         document.getElementById("config-meta-mat").value = metasConfig.meta_matricula;
         document.getElementById("config-meta-remat").value = metasConfig.meta_rematricula;
         document.getElementById("config-meta-total").value = metasConfig.meta_total;
@@ -588,49 +861,79 @@
     }
     configCloseBtn.onclick = function() { configModal.style.display = "none"; }
 
-    configForm.onsubmit = function(event) {
+    configForm.onsubmit = async function(event) {
         event.preventDefault();
         
-        // Atualiza o objeto global de configurações
-        metasConfig.meta_matricula = parseInt(document.getElementById("config-meta-mat").value);
-        metasConfig.meta_rematricula = parseInt(document.getElementById("config-meta-remat").value);
-        metasConfig.meta_total = parseInt(document.getElementById("config-meta-total").value);
-        
-        // Atualiza os KPIs de Meta na tela
-        document.getElementById("kpi-meta-mat").textContent = metasConfig.meta_matricula;
-        document.getElementById("kpi-meta-remat").textContent = metasConfig.meta_rematricula;
-        
-        // Recarrega o dashboard para recalcular o progresso com a nova meta (se houver dados)
-        carregarDadosNaTela(ultimoRegistro);
+        if (!isAuthReady || !userId) {
+            showNotification("Aguarde a inicialização do Firebase.", 'error');
+            return;
+        }
 
-        alert(`Configuração Salva! Metas atualizadas.`);
-        configModal.style.display = "none";
-    }
+        const newMat = parseInt(document.getElementById("config-meta-mat").value) || 0;
+        const newRemat = parseInt(document.getElementById("config-meta-remat").value) || 0;
+        const newTotal = newMat + newRemat;
 
-    // === LÓGICA DO FILTRO DE DATA (APENAS SIMULAÇÃO) ===
-    btnFiltrar.onclick = function() {
-        const dataSelecionada = inputFiltroData.value;
-        if (dataSelecionada) {
-            
-            const [yyyy, mm, dd] = dataSelecionada.split('-');
-            const dataFormatada = `${dd}/${mm}/${yyyy}`;
-            
-            alert(`
-                BUSCA DE DADOS: O filtro está ativo, mas...
-                
-                Data Selecionada: ${dataFormatada}
-                
-                Nesta versão do protótipo (HTML/JS puro),
-                o filtro não pode buscar dados históricos. Apenas a ÚLTIMA inserção
-                é mantida. Para a busca real de ${dataFormatada}, um BACKEND é necessário.
-            `);
+        const configData = {
+            meta_matricula: newMat,
+            meta_rematricula: newRemat,
+            meta_total: newTotal
+        };
 
-        } else {
-            alert("Por favor, selecione uma data para filtrar a visualização.");
+        const submitBtn = document.getElementById('saveConfigBtn');
+        submitBtn.textContent = 'Salvando...';
+        submitBtn.disabled = true;
+
+        try {
+            const docRef = doc(db, CONFIG_DOC_PATH(userId));
+            await setDoc(docRef, configData);
+
+            showNotification(`Metas atualizadas com sucesso! Total: ${newTotal}.`, 'success');
+            configModal.style.display = "none";
+        } catch (error) {
+            console.error('Erro ao salvar a configuração:', error);
+            showNotification("ERRO: Não foi possível salvar as configurações.", 'error');
+        } finally {
+            submitBtn.textContent = 'Salvar Configuração';
+            submitBtn.disabled = false;
         }
     }
 
-    // Fechar os modais ao clicar fora
+    // === 9. LÓGICA DO FILTRO DE DATA ===
+    const btnFiltrar = document.getElementById("btn-filtrar");
+    const inputFiltroData = document.getElementById("data-filtro");
+
+    btnFiltrar.onclick = async function() {
+        const dataSelecionada = inputFiltroData.value; // YYYY-MM-DD
+        
+        if (!dataSelecionada) {
+            showNotification("Por favor, selecione uma data para filtrar a visualização.", 'info');
+            return;
+        }
+        
+        if (!isAuthReady || !userId) {
+            showNotification("Aguarde a inicialização do Firebase.", 'error');
+            return;
+        }
+
+        try {
+            const docRef = doc(db, DAILY_COLLECTION_PATH(userId), dataSelecionada);
+            const snapshot = await getDoc(docRef);
+
+            if (snapshot.exists()) {
+                const dadosFiltrados = snapshot.data();
+                carregarDadosNaTela(dadosFiltrados);
+                showNotification(`Dados do dia ${dadosFiltrados.data_display} carregados com sucesso.`, 'success');
+            } else {
+                carregarDadosNaTela(null); // Limpa a tela
+                showNotification(`Nenhum registro encontrado para a data: ${dataSelecionada}.`, 'info');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar registro por data:', error);
+            showNotification("Erro ao buscar dados históricos.", 'error');
+        }
+    }
+
+    // === 10. FECHAR MODAIS E INICIAR APP ===
     window.onclick = function(event) {
         if (event.target == dataModal) {
             dataModal.style.display = "none";
@@ -639,6 +942,9 @@
             configModal.style.display = "none";
         }
     }
+
+    window.onload = initializeFirebase;
+
 </script>
 
 </body>
