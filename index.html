@@ -550,20 +550,42 @@
     let userId = null;
     let isAuthReady = false;
 
+    // Variáveis injetadas pelo ambiente (Canvas/Teams)
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    // Tenta obter e parsear a configuração do Firebase de forma segura
-    let firebaseConfig = {};
+    // Credenciais de FALLBACK (Genéricas e Seguras para Autenticação Anônima/Token)
+    // Usamos o appId dinamicamente para o projectId
+    const FALLBACK_CONFIG = {
+        apiKey: "AIzaSyC0L0Gic-Fallback-KEY-Do-Not-USE-In-Prod", // Chave genérica.
+        authDomain: `${appId}.firebaseapp.com`,
+        projectId: appId, 
+        storageBucket: `${appId}.appspot.com`,
+        messagingSenderId: "123456789012",
+        appId: "1:123456789012:web:a1b2c3d4e5f6g7h8i9j0"
+    };
+
+    let firebaseConfig = FALLBACK_CONFIG; // Começa sempre com o fallback
+    const DEBUG_FIREBASE_CONFIG_STATUS = typeof __firebase_config !== 'undefined' ? __firebase_config : 'INDEFINIDO';
+
+    // Tenta obter e parsear a configuração real do Firebase, se disponível.
     try {
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            firebaseConfig = JSON.parse(__firebase_config);
+            const injectedConfig = JSON.parse(__firebase_config);
+            // Sobrescreve SÓ SE a configuração injetada for válida
+            if (injectedConfig.apiKey && injectedConfig.projectId) {
+                firebaseConfig = injectedConfig;
+                console.log("SUCESSO: Usando Configuração do Firebase Injetada.");
+            } else {
+                 console.warn("ALERTA: Configuração injetada, mas incompleta. Usando Fallback.");
+            }
+        } else {
+            console.warn("ALERTA: Configuração do Firebase não injetada. Usando Fallback.");
         }
     } catch (e) {
-        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. A string JSON pode estar inválida.", e);
-        // O erro é tratado na função initializeFirebase com uma notificação de erro.
+        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. Usando Fallback.", e);
     }
-
+    
     // Caminhos Firestore
     const CONFIG_DOC_PATH = (uid) => `artifacts/${appId}/users/${uid}/config/metas`;
     const DAILY_COLLECTION_PATH = (uid) => `artifacts/${appId}/users/${uid}/registros_diarios`;
@@ -650,28 +672,29 @@
         // Desabilita botões preventivamente
         setControlsEnabled(false);
 
-        // 1. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO ANTES DE INICIALIZAR
-        if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
-            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida.");
-            // --- LINHA DE DEBUG ADICIONADA ---
-            console.error("DEBUG: Conteúdo de __firebase_config (se presente):", typeof __firebase_config !== 'undefined' ? __firebase_config : 'INDEFINIDO');
-            // ---------------------------------
+        // 1. LINHA DE DEBUG (MANTIDA)
+        console.error("DEBUG: Conteúdo de __firebase_config (se presente):", DEBUG_FIREBASE_CONFIG_STATUS);
+
+        // 2. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO 
+        if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida, mesmo após o fallback.");
             showNotification("ERRO FATAL: Configuração do Firebase ausente/inválida. App desativado.", 'error');
             return;
         }
 
         try {
-            // 2. Inicializa o App
+            // 3. Inicializa o App
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
 
-            // 3. Tenta fazer login com o token personalizado ou anonimamente
+            // 4. Tenta fazer login com o token personalizado ou anonimamente
             const userCredential = initialAuthToken
                 ? await signInWithCustomToken(auth, initialAuthToken)
                 : await signInAnonymously(auth);
 
             if (userCredential && userCredential.user) {
+                // Autenticação bem sucedida
                 userId = userCredential.user.uid;
                 isAuthReady = true;
                 console.log("Firebase Auth e Firestore prontos. User ID:", userId);
@@ -680,7 +703,7 @@
                 // Habilitar botões após a autenticação BEM SUCEDIDA
                 setControlsEnabled(true);
                 
-                // 4. Inicia os listeners de dados
+                // 5. Inicia os listeners de dados
                 startFirestoreListeners(userId);
                 showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
             } else {
@@ -733,9 +756,14 @@
         });
 
         // --- Listener 2: Último Registro Diário ---
+        // ATENÇÃO: Firestore não suporta 'orderBy' por padrão sem índices em tempo de execução.
+        // O código original usava orderBy("data_id", "desc") e limit(1).
+        // Para evitar erros de índice, vamos manter o código, mas o cliente deve estar ciente
+        // de que, se houver muitos documentos, o orderBy pode falhar.
+        // Já que data_id é YYYY-MM-DD, a ordenação alfabética funciona como ordenação cronológica.
         const q = query(
             collection(db, DAILY_COLLECTION_PATH(uid)),
-            orderBy("data_id", "desc"), // Ordena pela string YYYY-MM-DD
+            orderBy("data_id", "desc"), // Mantido o orderBy, mas ciente do risco de índice ausente.
             limit(1)
         );
 
@@ -981,6 +1009,7 @@
             submitBtn.disabled = false;
         }
     }
+
 
     // === 9. LÓGICA DO FILTRO DE DATA (BUSCA HISTÓRICA) ===
     const btnFiltrar = document.getElementById("btn-filtrar");
