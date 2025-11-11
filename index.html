@@ -653,6 +653,9 @@
         // 1. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO ANTES DE INICIALIZAR
         if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
             console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida.");
+            // --- LINHA DE DEBUG ADICIONADA ---
+            console.error("DEBUG: Conteúdo de __firebase_config (se presente):", typeof __firebase_config !== 'undefined' ? __firebase_config : 'INDEFINIDO');
+            // ---------------------------------
             showNotification("ERRO FATAL: Configuração do Firebase ausente/inválida. App desativado.", 'error');
             return;
         }
