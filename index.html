@@ -59,6 +59,41 @@
             fill: var(--unopar-orange-accent);
         }
 
+        /* CRITICAL ERROR SCREEN STYLES (NOVO) */
+        #critical-error-screen {
+            display: none; /* Controlado pelo JS */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffe6e6; /* Fundo vermelho claro */
+            z-index: 5000;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        #critical-error-screen h2 {
+            color: var(--danger-red);
+            font-size: 2em;
+            margin-top: 15vh;
+        }
+        #critical-error-screen pre {
+            background: #ffffff;
+            border: 1px solid var(--danger-red);
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            overflow-x: auto;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        #critical-error-screen p {
+            color: var(--text-dark);
+            margin-top: 10px;
+        }
+
         /* FILTROS E CONFIGURAÇÕES */
         .header-controls {
             display: flex;
@@ -354,6 +389,17 @@
 
 <div id="toast-container"></div>
 
+<!-- NOVO: TELA DE ERRO CRÍTICO (VISÍVEL APENAS NA FALHA DE INICIALIZAÇÃO) -->
+<div id="critical-error-screen">
+    <h2>❌ ERRO FATAL DE INICIALIZAÇÃO DO FIREBASE ❌</h2>
+    <p>O aplicativo não conseguiu estabelecer a conexão com o banco de dados. Isso geralmente ocorre devido a uma **falha na injeção das credenciais** do Firebase pelo ambiente (Teams).</p>
+    <p>O aplicativo tentou inicializar com a seguinte configuração:</p>
+    <pre id="error-config-display">Carregando...</pre>
+    <p>Ação Necessária: Contacte o suporte técnico e compartilhe o conteúdo acima.</p>
+</div>
+<!-- FIM TELA DE ERRO CRÍTICO -->
+
+
 <div class="dashboard-container">
     
     <div class="main-header">
@@ -556,13 +602,13 @@
     let isAuthReady = false;
 
     // Variáveis injetadas pelo ambiente (Canvas/Teams)
-    // Se __app_id for undefined, usamos um ID genérico.
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    const injectedConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
 
     // Credenciais de FALLBACK (Configuração mínima para inicialização anônima)
     const FALLBACK_CONFIG = {
-        apiKey: "AIzaSyC0L0Gic-Fallback-KEY-Do-Not-USE-In-Prod", // Chave genérica.
+        apiKey: "FALLBACK_API_KEY_ANONYMOUS_ONLY", 
         authDomain: `${appId}.firebaseapp.com`,
         projectId: appId, 
         storageBucket: `${appId}.appspot.com`,
@@ -571,23 +617,28 @@
     };
 
     let firebaseConfig = FALLBACK_CONFIG; // Valor padrão de fallback
+    let configSource = 'Padrão (Fallback)';
 
     // Tenta obter e parsear a configuração real do Firebase, se disponível.
     try {
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            const injectedConfig = JSON.parse(__firebase_config);
+        if (injectedConfigString && injectedConfigString !== 'null' && injectedConfigString !== 'undefined') {
+            const injectedConfig = JSON.parse(injectedConfigString);
             // Verifica se a configuração injetada parece razoável antes de usar
             if (injectedConfig.apiKey && injectedConfig.projectId) {
                 firebaseConfig = injectedConfig;
+                configSource = 'Injetada (Teams/Canvas)';
                 console.log("SUCESSO: Usando Configuração do Firebase Injetada.");
             } else {
                  console.warn("ALERTA: Configuração injetada, mas incompleta. Usando Fallback.");
             }
         } else {
-            console.warn("ALERTA: Configuração do Firebase não injetada. Usando Fallback.");
+            console.warn("ALERTA: Configuração do Firebase não injetada ou vazia. Usando Fallback.");
         }
     } catch (e) {
         console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. Usando Fallback.", e);
+        // Garante que o fallback seja usado em caso de JSON malformado
+        firebaseConfig = FALLBACK_CONFIG;
+        configSource = `Fallback (Erro de JSON: ${e.message.substring(0, 50)}...)`;
     }
     
     // Caminhos Firestore
@@ -636,6 +687,31 @@
     }
 
     /**
+     * Função para mostrar o Erro Crítico na Tela
+     * @param {string} errorMessage - Mensagem de erro.
+     * @param {object} config - Configuração tentada.
+     */
+    function showCriticalErrorScreen(errorMessage, config) {
+        const screen = document.getElementById('critical-error-screen');
+        const configDisplay = document.getElementById('error-config-display');
+        
+        // Obfuscate sensitive data for display
+        const displayConfig = {
+            ...config,
+            apiKey: config.apiKey ? config.apiKey.substring(0, 8) + '...' : 'NÃO FORNECIDA',
+            appId: config.appId ? config.appId.substring(0, 10) + '...' : 'NÃO FORNECIDA',
+            token: initialAuthToken ? initialAuthToken.substring(0, 8) + '...' : 'NÃO INJETADO'
+        };
+
+        configDisplay.textContent = `Origem da Configuração: ${configSource}\n`;
+        configDisplay.textContent += `Mensagem de Erro: ${errorMessage}\n\n`;
+        configDisplay.textContent += JSON.stringify(displayConfig, null, 2);
+        
+        screen.style.display = 'block';
+    }
+
+
+    /**
      * Formata a data de Date object para YYYY-MM-DD (Firestore ID).
      * @param {Date} date - Objeto Date.
      * @returns {string} - Data formatada (YYYY-MM-DD).
@@ -679,7 +755,7 @@
         // 1. VERIFICAÇÃO CRÍTICA FINAL DA CONFIGURAÇÃO
         if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
             console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida.");
-            showNotification("ERRO FATAL: Configuração do Firebase incompleta. Tente recarregar.", 'fatal');
+            showCriticalErrorScreen("Chave API ou Project ID ausente na configuração final.", firebaseConfig);
             return;
         }
 
@@ -689,10 +765,23 @@
             db = getFirestore(app);
             auth = getAuth(app);
 
-            // 3. Tenta fazer login com o token personalizado (se existir) ou anonimamente (fallback)
-            const userCredential = initialAuthToken
-                ? await signInWithCustomToken(auth, initialAuthToken)
-                : await signInAnonymously(auth);
+            let userCredential = null;
+
+            // 3. Tenta fazer login com o token personalizado
+            if (initialAuthToken) {
+                try {
+                    userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                } catch (e) {
+                    console.warn("Token injetado inválido ou expirado. Tentando autenticação anônima...", e.code);
+                    // Falha no token customizado, continua para o bloco anônimo abaixo
+                }
+            }
+
+            // 4. Se não autenticou com o token ou se não havia token, tenta anonimamente
+            if (!userCredential) {
+                userCredential = await signInAnonymously(auth);
+            }
+
 
             if (userCredential && userCredential.user) {
                 // Autenticação bem sucedida
@@ -701,49 +790,25 @@
                 console.log("Firebase Auth e Firestore prontos. User ID:", userId);
                 document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
                 
-                // Habilitar botões após a autenticação BEM SUCEDIDA
+                // Oculta a tela de erro e habilita botões
+                document.getElementById('critical-error-screen').style.display = 'none';
                 setControlsEnabled(true);
                 
-                // 4. Inicia os listeners de dados
+                // 5. Inicia os listeners de dados
                 startFirestoreListeners(userId);
                 showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
             } else {
-                console.error("Erro na autenticação. Usuário não encontrado.");
-                showNotification("Erro na autenticação do Firebase. Recarregue a página.", 'error');
+                // Isso só deve acontecer se signInAnonymously falhar por algum motivo
+                console.error("Erro na autenticação. Usuário não encontrado após tentativas.");
+                showCriticalErrorScreen("Falha na Autenticação (Anônima e Customizada).", firebaseConfig);
             }
 
         } catch (error) {
-            // Captura erros comuns de inicialização/autenticação
-            console.error("Erro ao inicializar Firebase ou Autenticar:", error);
-            
-            // Tratamento específico para o Teams/Ambiente de Injeção
-            if (error.code === 'auth/invalid-custom-token' && initialAuthToken) {
-                 // Este é um erro esperado se o token injetado for inválido. Vamos tentar anonimamente.
-                 console.warn("Token injetado inválido, tentando autenticação anônima...");
-                 try {
-                    const anonymousCredential = await signInAnonymously(auth);
-                     if (anonymousCredential && anonymousCredential.user) {
-                        userId = anonymousCredential.user.uid;
-                        isAuthReady = true;
-                        document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
-                        setControlsEnabled(true);
-                        startFirestoreListeners(userId);
-                        showNotification("Conexão anônima estabelecida. (Modo de Fallback)", 'info');
-                        return; // Sai da função após o sucesso anônimo
-                    }
-                 } catch (anonError) {
-                     // Se a anônima também falhar, é um erro fatal
-                     console.error("ERRO FATAL: Falha na Autenticação Anônima:", anonError);
-                     showNotification(`ERRO CRÍTICO: Falha na Autenticação. Código: ${anonError.code}`, 'fatal');
-                     setControlsEnabled(false);
-                     return;
-                 }
-            } else {
-                // Outros erros (Rede, Permissão etc.)
-                const errorCode = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
-                showNotification(`Falha na Inicialização: ${errorCode}. App desativado.`, 'fatal');
-                setControlsEnabled(false); // Garante que fiquem desabilitados
-            }
+            // Captura erros gerais de inicialização/autenticação
+            console.error("Erro CRÍTICO ao inicializar Firebase ou Autenticar:", error);
+            const errorMessage = error.code ? `Erro Código: ${error.code} - ${error.message}` : error.toString();
+            showCriticalErrorScreen(errorMessage, firebaseConfig);
+            setControlsEnabled(false); 
         }
     }
 
