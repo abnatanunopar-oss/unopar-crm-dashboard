@@ -535,7 +535,7 @@
     // === 1. IMPORTS DO FIREBASE ===
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // Ativar logs do Firebase para debug (Obrigatório em ambientes Canvas)
@@ -623,41 +623,40 @@
     // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
     async function initializeFirebase() {
         try {
+            // 1. Inicializa o App
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
 
-            if (initialAuthToken) {
-                await signInWithCustomToken(auth, initialAuthToken);
-            } else {
-                await signInAnonymously(auth);
-            }
+            // 2. Tenta fazer login com o token personalizado ou anonimamente
+            const userCredential = initialAuthToken
+                ? await signInWithCustomToken(auth, initialAuthToken)
+                : await signInAnonymously(auth);
 
-            // O listener onAuthStateChanged garante que a inicialização só prossiga após o login.
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    userId = user.uid;
-                    isAuthReady = true;
-                    console.log("Firebase Auth e Firestore prontos. User ID:", userId);
-                    document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
-                    
-                    // Habilitar botões após a autenticação
-                    document.getElementById('openModalBtn').disabled = false;
-                    document.getElementById('openConfigBtn').disabled = false;
-                    document.getElementById('btn-filtrar').disabled = false;
-                    
-                    startFirestoreListeners(userId);
-                } else {
-                    console.error("Erro na autenticação. Ops, sem usuário!");
-                    showNotification("Erro de autenticação do Firebase. Recarregue a página.", 'error');
-                }
-            });
+            if (userCredential && userCredential.user) {
+                userId = userCredential.user.uid;
+                isAuthReady = true;
+                console.log("Firebase Auth e Firestore prontos. User ID:", userId);
+                document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
+                
+                // Habilitar botões após a autenticação
+                document.getElementById('openModalBtn').disabled = false;
+                document.getElementById('openConfigBtn').disabled = false;
+                document.getElementById('btn-filtrar').disabled = false;
+                
+                // 3. Inicia os listeners de dados
+                startFirestoreListeners(userId);
+            } else {
+                console.error("Erro na autenticação. Ops, sem usuário!");
+                showNotification("Erro de autenticação do Firebase. Recarregue a página.", 'error');
+            }
 
         } catch (error) {
             console.error("Erro fatal ao inicializar Firebase:", error);
             showNotification("Erro fatal ao inicializar o app.", 'error');
         }
     }
+
 
     // === 5. LISTENERS DO FIRESTORE (TEMPO REAL) ===
 
@@ -724,7 +723,14 @@
 
         if (dados) {
             // Soma o total de ativos
-            totalAtivos = dados.ativa + dados.formando + dados.ath_calouros + dados.ath_veterano + dados.calouro_ext;
+            // Usando Number() para garantir que todos os valores sejam tratados como números
+            const ativa = Number(dados.ativa) || 0;
+            const formando = Number(dados.formando) || 0;
+            const ath_calouros = Number(dados.ath_calouros) || 0;
+            const ath_veterano = Number(dados.ath_veterano) || 0;
+            const calouro_ext = Number(dados.calouro_ext) || 0;
+
+            totalAtivos = ativa + formando + ath_calouros + ath_veterano + calouro_ext;
             
             // Calcula o progresso (com metaTotal garantido em metasConfig)
             progresso = metasConfig.meta_total > 0 ? 
@@ -735,12 +741,12 @@
             document.getElementById("chart-documentacao-regular").textContent = `${dados.doc_regular} Regulares | ${dados.doc_irre} Irregulares`;
             document.getElementById("chart-modalidade-semi").textContent = `${dados.semipresencial} Semi | ${dados.online_100} Online`;
             
-            const totalEvasao = dados.trancada + dados.cancelada + dados.nao_efet_mat;
+            const totalEvasao = Number(dados.trancada) + Number(dados.cancelada) + Number(dados.nao_efet_mat);
             document.getElementById("chart-evasao-trancada").textContent = `${totalEvasao} Evasão | T:${dados.trancada} C:${dados.cancelada}`;
             
             document.getElementById("chart-data-registro").textContent = `Data: ${dados.data_display}`;
             
-            document.getElementById("chart-status-ativos").textContent = `ATH:${dados.ath_calouros + dados.ath_veterano} | Ativa:${dados.ativa} | Formando:${dados.formando}`;
+            document.getElementById("chart-status-ativos").textContent = `ATH:${ath_calouros + ath_veterano} | Ativa:${ativa} | Formando:${formando}`;
 
         } else {
             // Se não houver dados, zera as visualizações
@@ -771,6 +777,11 @@
     const inputDataFirestore = document.getElementById("input-data-firestore");
 
     openDataBtn.onclick = function() {
+        if (!isAuthReady) {
+             showNotification("Aguarde a inicialização da autenticação (Firebase).", 'error');
+             return;
+        }
+
         const today = new Date();
         // Preenche a data no formato de exibição (DD/MM/YYYY)
         inputDataDisplay.value = formatDateDisplay(today);
@@ -780,6 +791,10 @@
         dataModal.style.display = "block";
         document.getElementById('saveDataBtn').textContent = 'Salvar Registro';
         document.getElementById('saveDataBtn').disabled = false;
+        
+        // Limpa os campos do formulário ao abrir (exceto datas)
+        // Isso é importante para evitar a persistência de valores se o modal for fechado e reaberto
+        dataForm.reset(); 
     }
 
     dataCloseBtn.onclick = function() { dataModal.style.display = "none"; }
@@ -799,7 +814,7 @@
         submitBtn.textContent = 'Salvando...';
         submitBtn.disabled = true;
 
-        // Captura de dados do formulário
+        // Captura de dados do formulário (Garantir que sejam números inteiros)
         const formData = {
             data_id: dataId,
             data_display: dataDisplay,
@@ -826,11 +841,11 @@
             
             showNotification(`Registro de ${dataDisplay} salvo com sucesso no Firestore!`, 'success');
             dataModal.style.display = "none";
-            dataForm.reset();
+            // Não faz reset aqui, pois o onSnapshot vai atualizar o dashboard e o último registro
 
         } catch (error) {
             console.error('Erro ao salvar o registro diário:', error);
-            showNotification("ERRO: Não foi possível salvar o registro no banco de dados.", 'error');
+            showNotification("ERRO: Não foi possível salvar o registro no banco de dados. Verifique as regras de segurança.", 'error');
         } finally {
             submitBtn.textContent = 'Salvar Registro';
             submitBtn.disabled = false;
@@ -853,6 +868,11 @@
     };
 
     openConfigBtn.onclick = function() {
+        if (!isAuthReady) {
+             showNotification("Aguarde a inicialização da autenticação (Firebase).", 'error');
+             return;
+        }
+
         // Preenche o formulário com os valores atuais antes de abrir
         document.getElementById("config-meta-mat").value = metasConfig.meta_matricula;
         document.getElementById("config-meta-remat").value = metasConfig.meta_rematricula;
@@ -891,14 +911,14 @@
             configModal.style.display = "none";
         } catch (error) {
             console.error('Erro ao salvar a configuração:', error);
-            showNotification("ERRO: Não foi possível salvar as configurações.", 'error');
+            showNotification("ERRO: Não foi possível salvar as configurações. Verifique as regras de segurança.", 'error');
         } finally {
             submitBtn.textContent = 'Salvar Configuração';
             submitBtn.disabled = false;
         }
     }
 
-    // === 9. LÓGICA DO FILTRO DE DATA ===
+    // === 9. LÓGICA DO FILTRO DE DATA (BUSCA HISTÓRICA) ===
     const btnFiltrar = document.getElementById("btn-filtrar");
     const inputFiltroData = document.getElementById("data-filtro");
 
@@ -915,13 +935,18 @@
             return;
         }
 
+        // Desabilita botão enquanto busca
+        btnFiltrar.disabled = true;
+        btnFiltrar.textContent = 'Buscando...';
+
         try {
             const docRef = doc(db, DAILY_COLLECTION_PATH(userId), dataSelecionada);
             const snapshot = await getDoc(docRef);
 
             if (snapshot.exists()) {
                 const dadosFiltrados = snapshot.data();
-                carregarDadosNaTela(dadosFiltrados);
+                // O filtro carrega os dados filtrados. O listener do último registro continua rodando em background.
+                carregarDadosNaTela(dadosFiltrados); 
                 showNotification(`Dados do dia ${dadosFiltrados.data_display} carregados com sucesso.`, 'success');
             } else {
                 carregarDadosNaTela(null); // Limpa a tela
@@ -929,7 +954,10 @@
             }
         } catch (error) {
             console.error('Erro ao buscar registro por data:', error);
-            showNotification("Erro ao buscar dados históricos.", 'error');
+            showNotification("Erro ao buscar dados históricos. Verifique o console.", 'error');
+        } finally {
+            btnFiltrar.disabled = false;
+            btnFiltrar.textContent = 'Filtrar';
         }
     }
 
@@ -943,6 +971,7 @@
         }
     }
 
+    // Iniciar o Firebase após o carregamento completo da janela.
     window.onload = initializeFirebase;
 
 </script>
