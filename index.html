@@ -548,7 +548,8 @@
     let isAuthReady = false;
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
     // Tenta obter e parsear a configuração do Firebase de forma segura
     let firebaseConfig = {};
     try {
@@ -557,11 +558,8 @@
         }
     } catch (e) {
         console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config. A string JSON pode estar inválida.", e);
-        showNotification("Erro de Configuração. Verifique o console.", 'error');
-        // Mantém firebaseConfig como objeto vazio
+        // O erro é tratado na função initializeFirebase com uma notificação de erro.
     }
-
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
     // Caminhos Firestore
     const CONFIG_DOC_PATH = (uid) => `artifacts/${appId}/users/${uid}/config/metas`;
@@ -634,20 +632,21 @@
 
     // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
     async function initializeFirebase() {
-        // Verifica se a configuração é válida antes de tentar inicializar
-        if (Object.keys(firebaseConfig).length === 0) {
-            console.warn("A configuração do Firebase está vazia ou inválida. Inicialização cancelada.");
-            showNotification("Aviso: Configuração do Firebase ausente/inválida. Funcionalidades de DB desativadas.", 'error');
+        
+        // 1. VERIFICAÇÃO CRÍTICA DA CONFIGURAÇÃO ANTES DE INICIALIZAR (NOVO)
+        if (Object.keys(firebaseConfig).length === 0 || !firebaseConfig.apiKey || !firebaseConfig.projectId) {
+            console.error("ERRO FATAL: A configuração do Firebase está incompleta ou inválida. Não é possível iniciar o app.");
+            showNotification("ERRO FATAL: Configuração do Firebase ausente/inválida. Botões desativados.", 'error');
             return;
         }
 
         try {
-            // 1. Inicializa o App
+            // 2. Inicializa o App
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
 
-            // 2. Tenta fazer login com o token personalizado ou anonimamente
+            // 3. Tenta fazer login com o token personalizado ou anonimamente
             const userCredential = initialAuthToken
                 ? await signInWithCustomToken(auth, initialAuthToken)
                 : await signInAnonymously(auth);
@@ -663,18 +662,19 @@
                 document.getElementById('openConfigBtn').disabled = false;
                 document.getElementById('btn-filtrar').disabled = false;
                 
-                // 3. Inicia os listeners de dados
+                // 4. Inicia os listeners de dados
                 startFirestoreListeners(userId);
+                showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
             } else {
                 console.error("Erro na autenticação. Ops, sem usuário!");
-                showNotification("Erro de autenticação do Firebase. Recarregue a página.", 'error');
+                showNotification("Erro na autenticação do Firebase. Recarregue a página.", 'error');
             }
 
         } catch (error) {
-            console.error("Erro fatal ao inicializar Firebase. Detalhe:", error);
             // Captura erros comuns de inicialização/autenticação
-            const errorMessage = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
-            showNotification(`Erro fatal ao inicializar o app. ${errorMessage}`, 'error');
+            console.error("Erro ao inicializar Firebase ou Autenticar:", error);
+            const errorCode = error.code ? `Firebase: ${error.code}` : "Verifique as configurações do projeto.";
+            showNotification(`Falha: ${errorCode}. Botões desativados.`, 'error');
         }
     }
 
