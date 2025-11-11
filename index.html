@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNOPAR CRM Dashboard - Unidade Recife</title>
+    <style>
+        /* DEFINIÇÃO DE CORES UNOPAR */
+        :root {
+            --unopar-blue-dark: #1E3799; /* Azul Principal Forte */
+            --unopar-orange-accent: #FF8F00; /* Laranja/Amarelo de Destaque */
+            --background-light: #f0f2f5;
+            --text-dark: #343a40;
+            --success-green: #28a745;
+        }
+
+        /* RESET & BASE */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-light);
+            margin: 0;
+            padding: 0;
+            overflow-y: hidden; 
+        }
+        .dashboard-container {
+            max-width: 1300px;
+            margin: 20px auto; 
+            padding: 10px 20px;
+            height: calc(100vh - 40px);
+            overflow-y: auto; 
+        }
+
+        /* HEADER & LOGO ALINHAMENTO */
+        .main-header {
+            display: flex; 
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--unopar-orange-accent); /* Linha de acento UNOPAR */
+            padding-bottom: 5px;
+        }
+        .main-header h1 {
+            color: var(--unopar-blue-dark);
+            font-weight: 700;
+            margin: 0; 
+            font-size: 1.8em;
+        }
+        /* ESTILO PARA LOGO SVG "U" */
+        .logo-svg {
+            height: 40px; /* Tamanho da logo, ajuste se necessário */
+            width: 40px;
+            margin-right: 15px; 
+            /* Para garantir que o SVG use as cores definidas: */
+        }
+        .logo-svg .u-blue {
+            fill: var(--unopar-blue-dark);
+        }
+        .logo-svg .u-orange {
+            fill: var(--unopar-orange-accent);
+        }
+        /* FIM: HEADER & LOGO ALINHAMENTO */
+
+        /* FILTROS E CONFIGURAÇÕES */
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .date-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .date-filter-group label {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+        .date-filter-group input {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+        }
+        /* Botão de Filtro - AZUL UNOPAR */
+        .btn-filter {
+            background-color: var(--unopar-blue-dark);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-filter:hover {
+            background-color: #1a2e7a;
+        }
+        /* Botão de Configuração - Cinza Profissional */
+        .btn-config {
+            background-color: #6c757d; 
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .btn-config:hover {
+            background-color: #5a6268;
+        }
+        h2.group-title {
+            color: var(--text-dark);
+            font-size: 1.2em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--unopar-orange-accent); /* Destaque Laranja */
+            padding-left: 10px;
+        }
+
+        /* KPIs */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+        .kpi-value {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--unopar-blue-dark); /* Valores em Azul UNOPAR */
+            margin-bottom: 2px;
+        }
+        .kpi-label {
+            font-size: 0.85em;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        /* Bordas dos KPIs */
+        .kpi-card-ativos { border-left: 4px solid var(--unopar-blue-dark); }
+        .kpi-card-meta-mat { border-left: 4px solid var(--success-green); } /* Manter verde para Sucesso/Meta Matrícula */
+        .kpi-card-meta-remat { border-left: 4px solid var(--unopar-orange-accent); } /* Laranja para Rematrícula */
+        .kpi-card-progresso { background-color: #e9f5e9; border-left: 4px solid #17a2b8; } /* Azul claro para progresso */
+
+
+        /* GRÁFICOS (Mantido o estilo limpo) */
+        .chart-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .chart-placeholder {
+            background-color: #ffffff;
+            height: 250px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            color: #333;
+            padding: 15px;
+        }
+        .chart-placeholder h3 { font-size: 1em; margin: 0; padding: 0; color: var(--unopar-blue-dark); }
+        .chart-placeholder p { font-size: 0.8em; color: #6c757d; margin-top: 5px; }
+
+
+        /* BOTÃO FLUTUANTE - LARANJA UNOPAR */
+        .btn-insert {
+            position: fixed;
+            bottom: 20px; 
+            right: 20px; 
+            background-color: var(--unopar-orange-accent); /* Laranja Principal */
+            color: var(--unopar-blue-dark); /* Texto no azul escuro para contraste */
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 700; /* Mais destaque */
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(255, 143, 0, 0.4);
+            transition: background-color 0.3s;
+            z-index: 50;
+        }
+        .btn-insert:hover {
+            background-color: #e58100;
+        }
+
+        /* MODAIS (Manter neutro para foco no conteúdo) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(3px); 
+            overflow-y: auto; 
+        }
+        .modal-content {
+            background-color: #ffffff;
+            margin: 5% auto; 
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px; 
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); 
+            animation: slideIn 0.3s ease-out;
+        }
+        .form-title {
+            color: var(--unopar-blue-dark);
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .form-group-section-simple {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px 30px; 
+            margin-bottom: 20px;
+        }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: var(--text-dark); }
+        .form-group input {
+            width: 100%;
+            padding: 10px; 
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus { border-color: var(--unopar-blue-dark); outline: none; box-shadow: 0 0 0 0.2rem rgba(30, 55, 153, 0.25); }
+        /* Botão de Submissão - AZUL UNOPAR */
+        .form-submit-btn {
+            background-color: var(--unopar-blue-dark);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .form-submit-btn:hover {
+            background-color: #1a2e7a;
+        }
+        .close-btn { color: #aaa; float: right; font-size: 32px; font-weight: normal; transition: color 0.2s; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    
+    <div class="main-header">
+        <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+            <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
+            <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
+        </svg>
+        <h1>CRM Operacional - Unidade Recife</h1>
+    </div>
+    <div class="header-controls">
+        <div class="date-filter-group">
+            <label for="data-filtro">Buscar Registro por Data:</label>
+            <input type="date" id="data-filtro">
+            <button id="btn-filtrar" class="btn-filter">Filtrar</button>
+        </div>
+        <button id="openConfigBtn" class="btn-config">⚙️ Configurações de Metas</button>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card kpi-card-ativos">
+            <div class="kpi-value" id="kpi-ativos">0</div>
+            <div class="kpi-label">Total de Alunos Ativos</div>
+        </div>
+        <div class="kpi-card kpi-card-meta-mat">
+            <div class="kpi-value" id="kpi-meta-mat">400</div>
+            <div class="kpi-label">META MATRÍCULA</div>
+        </div>
+        <div class="kpi-card kpi-card-meta-remat">
+            <div class="kpi-value" id="kpi-meta-remat">773</div>
+            <div class="kpi-label">META REMATRÍCULA</div>
+        </div>
+        <div class="kpi-card kpi-card-progresso">
+            <div class="kpi-value" id="kpi-progresso">0%</div>
+            <div class="kpi-label">Progresso da Meta Total</div>
+        </div>
+    </div>
+
+    <h2 class="group-title">Análise Detalhada</h2>
+    <div class="chart-section">
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-financeiro-adimplentes">N/A Adimplentes</h3>
+            <p>Situação Financeira</p>
+        </div>
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-documentacao-regular">N/A Regulares</h3>
+            <p>Documentação</p>
+        </div>
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-modalidade-semi">N/A Semipresencial</h3>
+            <p>Modalidade</p>
+        </div>
+        
+        <div class="chart-placeholder">
+            <h3 id="chart-evasao-trancada">N/A Trancadas</h3>
+            <p>Evasão (Trancada, Cancelada, etc.)</p>
+        </div>
+
+        <div class="chart-placeholder">
+            <h3>Progressão de Metas</h3>
+            <p>Gráfico de Linha de Matrículas vs. Meta</p>
+        </div>
+
+        <div class="chart-placeholder">
+            <h3>Status de Alunos</h3>
+            <p>ATH/calouros, ATH/Veterano, CALOURO/ext, ATIVA, FORMANDO</p>
+        </div>
+    </div>
+</div>
+
+<button class="btn-insert" id="openModalBtn">➕ Inserir Dados Diários</button>
+
+<div id="dataModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn data-close-btn">&times;</span>
+        <h2 class="form-title">Registro Diário de Métricas (14 Campos Essenciais)</h2>
+        <form id="dataForm">
+            <div class="form-group-section-simple">
+                <div style="grid-column: 1 / 2;">
+                    <div class="form-group">
+                        <label for="input-data">Data do Registro</label>
+                        <input type="text" id="input-data" name="data" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-adimplente">ADIMPLEMTE</label>
+                        <input type="number" id="input-adimplente" name="adimplente" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-inadimplente">INADIMPLENTE</label>
+                        <input type="number" id="input-inadimplente" name="inadimplente" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-ativa">ATIVA</label>
+                        <input type="number" id="input-ativa" name="ativa" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-formando">FORMANDO</label>
+                        <input type="number" id="input-formando" name="formando" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-doc-reg">DOC REGULAR</label>
+                        <input type="number" id="input-doc-reg" name="doc_regular" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-doc-irre">DOC IRRE</label>
+                        <input type="number" id="input-doc-irre" name="doc_irre" value="0" required>
+                    </div>
+                </div>
+
+                <div style="grid-column: 2 / 3;">
+                    <div class="form-group">
+                        <label for="input-ath-calouros">ATH/calouros</label>
+                        <input type="number" id="input-ath-calouros" name="ath_calouros" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-ath-veterano">ATH/Veterano</label>
+                        <input type="number" id="input-ath-veterano" name="ath_veterano" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-calouro-ext">CALOURO/ext</label>
+                        <input type="number" id="input-calouro-ext" name="calouro_ext" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-semipresencial">SEMIPRESENCIAL</label>
+                        <input type="number" id="input-semipresencial" name="semipresencial" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-100-online">100% ONLINE</label>
+                        <input type="number" id="input-100-online" name="online_100" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-trancada">TRANCADA</label>
+                        <input type="number" id="input-trancada" name="trancada" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-cancelada">CANCELADA</label>
+                        <input type="number" id="input-cancelada" name="cancelada" value="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="input-nao-efet">NÃO EFET. MATRÍCULA</label>
+                        <input type="number" id="input-nao-efet" name="nao_efet_mat" value="0" required>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="form-submit-btn">Salvar Registro</button>
+        </form>
+    </div>
+</div>
+
+<div id="configModal" class="modal">
+    <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
+        <span class="close-btn config-close-btn">&times;</span>
+        <h2 class="form-title">Configuração de Metas</h2>
+        <form id="configForm">
+            <div class="form-group">
+                <label for="config-meta-mat">Meta Matrícula</label>
+                <input type="number" id="config-meta-mat" name="meta_matricula" value="400" required>
+            </div>
+            <div class="form-group">
+                <label for="config-meta-remat">Meta Rematrícula</label>
+                <input type="number" id="config-meta-remat" name="meta_rematricula" value="773" required>
+            </div>
+            <div class="form-group">
+                <label for="config-meta-total">Meta Total</label>
+                <input type="number" id="config-meta-total" name="meta_total" value="1173" required>
+            </div>
+            <button type="submit" class="form-submit-btn">Salvar Configuração</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // === 1. VARIÁVEIS DE DADOS (INICIAIS) ===
+    
+    // Configurações Globais (Metas) - Valores iniciais, podem ser alterados pelo modal
+    let metasConfig = {
+        meta_matricula: 400,
+        meta_rematricula: 773,
+        meta_total: 1173
+    };
+
+    // Variável para armazenar os dados da última inserção (perde ao recarregar)
+    let ultimoRegistro = null;
+
+
+    // Seletores
+    const dataModal = document.getElementById("dataModal");
+    const openDataBtn = document.getElementById("openModalBtn");
+    const dataCloseBtn = document.getElementsByClassName("data-close-btn")[0];
+    const inputData = document.getElementById("input-data");
+    const dataForm = document.getElementById("dataForm");
+
+    const configModal = document.getElementById("configModal");
+    const openConfigBtn = document.getElementById("openConfigBtn");
+    const configCloseBtn = document.getElementsByClassName("config-close-btn")[0];
+    const configForm = document.getElementById("configForm");
+    
+    const btnFiltrar = document.getElementById("btn-filtrar");
+    const inputFiltroData = document.getElementById("data-filtro");
+
+    // Função principal para carregar os dados na tela
+    function carregarDadosNaTela(dados) {
+        
+        if (!dados) {
+            // Se não houver dados, zera os valores (apenas na inicialização)
+            document.getElementById("kpi-ativos").textContent = "0"; 
+            document.getElementById("kpi-progresso").textContent = "0%";
+            document.getElementById("chart-financeiro-adimplentes").textContent = `N/A Adimplentes`;
+            document.getElementById("chart-documentacao-regular").textContent = `N/A Regulares`;
+            document.getElementById("chart-modalidade-semi").textContent = `N/A Semipresencial`;
+            document.getElementById("chart-evasao-trancada").textContent = `N/A Trancadas`;
+            return;
+        }
+
+        const totalAtivos = dados.ativa + dados.formando + dados.ath_calouros + dados.ath_veterano + dados.calouro_ext;
+        
+        // 1. Atualizar KPIs principais
+        document.getElementById("kpi-ativos").textContent = totalAtivos;
+        
+        const progresso = Math.round((totalAtivos / metasConfig.meta_total) * 100);
+        document.getElementById("kpi-progresso").textContent = `${progresso}%`;
+        
+        // 2. Atualizar Gráficos (Simulando o título)
+        document.getElementById("chart-financeiro-adimplentes").textContent = `${dados.adimplente} Adimplentes`;
+        document.getElementById("chart-documentacao-regular").textContent = `${dados.doc_regular} Regulares`;
+        document.getElementById("chart-modalidade-semi").textContent = `${dados.semipresencial} Semipresencial`;
+        document.getElementById("chart-evasao-trancada").textContent = `${dados.trancada} Trancadas`;
+
+        console.log(`Dados carregados:`, dados);
+    }
+    
+    // Carrega o dashboard no estado inicial (todos zeros)
+    window.onload = function() {
+        carregarDadosNaTela(null);
+    };
+
+    // === LÓGICA DO MODAL DE DADOS DIÁRIOS ===
+    openDataBtn.onclick = function() {
+        dataModal.style.display = "block";
+        
+        // Preenche a data de hoje automaticamente (DD/MM/AAAA)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        inputData.value = `${dd}/${mm}/${yyyy}`; 
+    }
+
+    dataCloseBtn.onclick = function() { dataModal.style.display = "none"; }
+
+    dataForm.onsubmit = function(event) {
+        event.preventDefault();
+        
+        const dataString = inputData.value;
+
+        // Captura de dados do formulário
+        const formData = {
+            data: dataString, // Mantém a data no objeto
+            adimplente: parseInt(document.getElementById("input-adimplente").value),
+            inadimplente: parseInt(document.getElementById("input-inadimplente").value),
+            ativa: parseInt(document.getElementById("input-ativa").value),
+            formando: parseInt(document.getElementById("input-formando").value),
+            doc_regular: parseInt(document.getElementById("input-doc-reg").value),
+            doc_irre: parseInt(document.getElementById("input-doc-irre").value),
+            ath_calouros: parseInt(document.getElementById("input-ath-calouros").value),
+            ath_veterano: parseInt(document.getElementById("input-ath-veterano").value),
+            calouro_ext: parseInt(document.getElementById("input-calouro-ext").value),
+            semipresencial: parseInt(document.getElementById("input-semipresencial").value),
+            online_150: parseInt(document.getElementById("input-100-online").value),
+            trancada: parseInt(document.getElementById("input-trancada").value),
+            cancelada: parseInt(document.getElementById("input-cancelada").value),
+            nao_efet_mat: parseInt(document.getElementById("input-nao-efet").value)
+        };
+        
+        // **Ação Principal:** Salva no objeto temporário
+        ultimoRegistro = formData;
+        
+        // Atualiza a tela com os novos dados
+        carregarDadosNaTela(ultimoRegistro);
+
+        alert(`SUCESSO! Registro Diário do dia ${dataString} inserido e visualizado na tela. ESTE DADO SERÁ PERDIDO AO RECARREGAR A PÁGINA.`);
+        dataForm.reset();
+        dataModal.style.display = "none";
+    }
+
+    // === LÓGICA DO MODAL DE CONFIGURAÇÃO ===
+    openConfigBtn.onclick = function() {
+        // Preenche o formulário de config com os valores atuais antes de abrir
+        document.getElementById("config-meta-mat").value = metasConfig.meta_matricula;
+        document.getElementById("config-meta-remat").value = metasConfig.meta_rematricula;
+        document.getElementById("config-meta-total").value = metasConfig.meta_total;
+        configModal.style.display = "block"; 
+    }
+    configCloseBtn.onclick = function() { configModal.style.display = "none"; }
+
+    configForm.onsubmit = function(event) {
+        event.preventDefault();
+        
+        // Atualiza o objeto global de configurações
+        metasConfig.meta_matricula = parseInt(document.getElementById("config-meta-mat").value);
+        metasConfig.meta_rematricula = parseInt(document.getElementById("config-meta-remat").value);
+        metasConfig.meta_total = parseInt(document.getElementById("config-meta-total").value);
+        
+        // Atualiza os KPIs de Meta na tela
+        document.getElementById("kpi-meta-mat").textContent = metasConfig.meta_matricula;
+        document.getElementById("kpi-meta-remat").textContent = metasConfig.meta_rematricula;
+        
+        // Recarrega o dashboard para recalcular o progresso com a nova meta (se houver dados)
+        carregarDadosNaTela(ultimoRegistro);
+
+        alert(`Configuração Salva! Metas atualizadas.`);
+        configModal.style.display = "none";
+    }
+
+    // === LÓGICA DO FILTRO DE DATA (APENAS SIMULAÇÃO) ===
+    btnFiltrar.onclick = function() {
+        const dataSelecionada = inputFiltroData.value;
+        if (dataSelecionada) {
+            
+            const [yyyy, mm, dd] = dataSelecionada.split('-');
+            const dataFormatada = `${dd}/${mm}/${yyyy}`;
+            
+            alert(`
+                BUSCA DE DADOS: O filtro está ativo, mas...
+                
+                Data Selecionada: ${dataFormatada}
+                
+                Nesta versão do protótipo (HTML/JS puro),
+                o filtro não pode buscar dados históricos. Apenas a ÚLTIMA inserção
+                é mantida. Para a busca real de ${dataFormatada}, um BACKEND é necessário.
+            `);
+
+        } else {
+            alert("Por favor, selecione uma data para filtrar a visualização.");
+        }
+    }
+
+    // Fechar os modais ao clicar fora
+    window.onclick = function(event) {
+        if (event.target == dataModal) {
+            dataModal.style.display = "none";
+        }
+        if (event.target == configModal) {
+            configModal.style.display = "none";
+        }
+    }
+</script>
+
+</body>
+</html>
