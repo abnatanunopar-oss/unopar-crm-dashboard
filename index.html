@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNOPAR CRM Dashboard - Unidade Recife</title>
+    <title>UNOPAR CRM Dashboard - Unidade Recife (Modo Local)</title>
     <style>
         /* DEFINIÇÃO DE CORES UNOPAR */
         :root {
@@ -13,6 +13,7 @@
             --text-dark: #343a40;
             --success-green: #28a745;
             --danger-red: #dc3545;
+            --warning-yellow: #ffc107;
         }
 
         /* RESET & BASE */
@@ -36,9 +37,14 @@
         .main-header {
             display: flex; 
             align-items: center;
+            justify-content: space-between; /* Para colocar o status lateral */
             margin-bottom: 20px;
             border-bottom: 3px solid var(--unopar-orange-accent); /* Linha de acento UNOPAR */
             padding-bottom: 5px;
+        }
+        .header-title-group {
+             display: flex;
+             align-items: center;
         }
         .main-header h1 {
             color: var(--unopar-blue-dark);
@@ -59,66 +65,43 @@
             fill: var(--unopar-orange-accent);
         }
 
-        /* CRITICAL ERROR SCREEN STYLES (NOVO) */
-        #critical-error-screen {
-            display: none; /* Controlado pelo JS */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #ffe6e6; /* Fundo vermelho claro */
-            z-index: 5000;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-        #critical-error-screen h2 {
-            color: var(--danger-red);
-            font-size: 2em;
-            margin-top: 15vh;
-        }
-        #critical-error-screen pre {
-            background: #ffffff;
-            border: 1px solid var(--danger-red);
-            padding: 15px;
-            margin-top: 20px;
-            text-align: left;
-            overflow-x: auto;
-            border-radius: 8px;
-            font-family: monospace;
-            white-space: pre-wrap;
-        }
-        #critical-error-screen p {
+        /* STATUS LOCAL */
+        .local-status {
+            background-color: var(--warning-yellow);
             color: var(--text-dark);
-            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 20px;
         }
 
-        /* FILTROS E CONFIGURAÇÕES */
+        /* FILTROS E CONTROLES */
         .header-controls {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            flex-wrap: wrap; /* Responsividade básica */
+            flex-wrap: wrap; 
             gap: 15px;
         }
-        .date-filter-group {
+        .control-group {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .date-filter-group label {
+        .control-group label {
             font-weight: 500;
             color: var(--text-dark);
         }
-        .date-filter-group input {
+        .control-group input {
             padding: 8px;
             border: 1px solid #ced4da;
             border-radius: 6px;
         }
-        /* Botão de Filtro - AZUL UNOPAR */
-        .btn-filter, .btn-config, .form-submit-btn, .btn-insert {
+        
+        /* Botões */
+        .btn-action, .btn-config, .form-submit-btn, .btn-insert {
             padding: 8px 15px;
             border: none;
             border-radius: 6px;
@@ -126,14 +109,21 @@
             transition: background-color 0.3s, box-shadow 0.3s;
             font-weight: 600;
         }
-        .btn-filter {
+        .btn-action {
             background-color: var(--unopar-blue-dark);
             color: white;
         }
-        .btn-filter:hover:not(:disabled) { background-color: #1a2e7a; }
-        .btn-filter:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        .btn-action:hover:not(:disabled) { background-color: #1a2e7a; }
+        .btn-action:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        
+        /* Botão de Exportação */
+        #btn-exportar {
+            background-color: var(--success-green);
+            color: white;
+        }
+        #btn-exportar:hover { background-color: #1e7e34; }
 
-        /* Botão de Configuração - Cinza Profissional */
+        /* Botão de Configuração */
         .btn-config {
             background-color: #6c757d; 
             color: white;
@@ -146,7 +136,7 @@
             font-size: 1.2em;
             margin-top: 20px;
             margin-bottom: 10px;
-            border-left: 4px solid var(--unopar-orange-accent); /* Destaque Laranja */
+            border-left: 4px solid var(--unopar-orange-accent); 
             padding-left: 10px;
         }
 
@@ -162,7 +152,7 @@
             padding: 15px 20px;
             border-radius: 8px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            min-height: 80px; /* Garante tamanho mínimo */
+            min-height: 80px; 
         }
         .kpi-value {
             font-size: 2.2em;
@@ -182,7 +172,7 @@
         .kpi-card-meta-remat { border-left: 4px solid var(--unopar-orange-accent); } 
         .kpi-card-progresso { 
             background-color: #e9f5e9; 
-            border-left: 4px solid #17a2b8; /* Cor de progresso */
+            border-left: 4px solid #17a2b8; 
             position: relative;
             overflow: hidden;
         }
@@ -192,7 +182,7 @@
             top: 0;
             left: 0;
             height: 100%;
-            width: 0%; /* Controlado pelo JS */
+            width: 0%; 
             background: linear-gradient(90deg, #17a2b840, transparent);
             z-index: 1;
             transition: width 0.5s ease-out;
@@ -200,10 +190,10 @@
         .kpi-card-progresso .kpi-value,
         .kpi-card-progresso .kpi-label {
             position: relative;
-            z-index: 2; /* Garante que o texto fique acima da barra */
+            z-index: 2; 
         }
         .kpi-card-ativos, .kpi-card-meta-mat, .kpi-card-meta-remat {
-            border-radius: 8px; /* Aplica o arredondamento para todos */
+            border-radius: 8px; 
         }
 
         /* GRÁFICOS */
@@ -226,7 +216,7 @@
             color: #333;
             padding: 15px;
             border-bottom: 4px solid var(--unopar-blue-dark);
-            text-align: center; /* Centraliza texto em telas pequenas */
+            text-align: center; 
         }
         .chart-placeholder h3 { font-size: 1.2em; margin: 0; padding: 0; color: var(--unopar-blue-dark); }
         .chart-placeholder p { font-size: 0.9em; color: #6c757d; margin-top: 5px; }
@@ -366,7 +356,7 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
-            .date-filter-group {
+            .control-group {
                 width: 100%;
                 flex-wrap: wrap;
             }
@@ -382,6 +372,9 @@
                 padding: 10px 20px;
                 font-size: 1em;
             }
+            .local-status {
+                margin-top: 5px;
+            }
         }
     </style>
 </head>
@@ -389,37 +382,34 @@
 
 <div id="toast-container"></div>
 
-<!-- TELA DE ERRO CRÍTICO (VISÍVEL APENAS NA FALHA DE INICIALIZAÇÃO) -->
-<div id="critical-error-screen">
-    <h2>❌ ERRO FATAL DE INICIALIZAÇÃO DO FIREBASE ❌</h2>
-    <p>O aplicativo não conseguiu estabelecer a conexão com o banco de dados. Isso geralmente ocorre devido a uma **falha na injeção ou validade das credenciais** do Firebase pelo ambiente (Teams).</p>
-    <p>O aplicativo tentou inicializar com a seguinte configuração:</p>
-    <pre id="error-config-display">Carregando...</pre>
-    <p>Ação Necessária: Copie o conteúdo acima e compartilhe com o suporte técnico para verificar a configuração do Firebase.</p>
-</div>
-<!-- FIM TELA DE ERRO CRÍTICO -->
-
-
-<!-- INÍCIO DO APLICATIVO PRINCIPAL (ESCONDIDO ATÉ A CONEXÃO) -->
-<div id="dashboard-app" style="display: none;">
+<!-- INÍCIO DO APLICATIVO PRINCIPAL -->
+<div id="dashboard-app" style="display: block;">
     <div class="dashboard-container">
         
         <div class="main-header">
-            <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-                <!-- SVG UNOPAR (Adaptado) -->
-                <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
-                <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
-            </svg>
-            <h1>CRM Operacional - Unidade Recife <span style="font-size: 0.7em; color: #6c757d;" id="current-user-id"></span></h1>
+            <div class="header-title-group">
+                <svg class="logo-svg" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                    <!-- SVG UNOPAR (Adaptado) -->
+                    <path class="u-blue" d="M375.3 128C375.3 57.31 317.9 0 247.3 0H136.7C66.1 0 8.7 57.31 8.7 128V375.3C8.7 445.9 66.1 503.3 136.7 503.3H375.3C445.9 503.3 503.3 445.9 503.3 375.3V128H375.3Z"/>
+                    <path class="u-orange" d="M136.7 375.3V128H247.3C317.9 128 375.3 185.3 375.3 256V375.3C375.3 445.9 317.9 503.3 247.3 503.3H136.7C66.1 503.3 8.7 445.9 8.7 375.3H136.7Z"/>
+                </svg>
+                <h1>CRM Operacional - Unidade Recife</h1>
+            </div>
+            <div class="local-status">
+                ⚠️ MODO LOCAL (SALVA SÓ NO SEU NAVEGADOR)
+            </div>
         </div>
 
         <div class="header-controls">
-            <div class="date-filter-group">
+            <div class="control-group">
                 <label for="data-filtro">Buscar Registro por Data:</label>
                 <input type="date" id="data-filtro">
-                <button id="btn-filtrar" class="btn-filter" disabled>Filtrar</button>
+                <button id="btn-filtrar" class="btn-action">Filtrar</button>
             </div>
-            <button id="openConfigBtn" class="btn-config" disabled>⚙️ Configurações de Metas</button>
+            <div class="control-group">
+                 <button id="btn-exportar" class="btn-action">Exportar (CSV)</button>
+                <button id="openConfigBtn" class="btn-config">⚙️ Metas</button>
+            </div>
         </div>
 
         <div class="kpi-grid">
@@ -477,7 +467,7 @@
         </div>
     </div>
 
-    <button class="btn-insert" id="openModalBtn" disabled>➕ Inserir Dados Diários</button>
+    <button class="btn-insert" id="openModalBtn">➕ Inserir Dados Diários</button>
 
     <div id="dataModal" class="modal">
         <div class="modal-content">
@@ -490,7 +480,7 @@
                         <div class="form-group">
                             <label for="input-data-display">Data do Registro</label>
                             <input type="text" id="input-data-display" name="data_display" readonly>
-                            <input type="hidden" id="input-data-firestore" name="data_firestore">
+                            <input type="hidden" id="input-data-id" name="data_id">
                         </div>
                         <!-- Financeiro -->
                         <div class="form-group">
@@ -589,72 +579,28 @@
 </div>
 <!-- FIM DO APLICATIVO PRINCIPAL -->
 
-<script type="module">
-    // === 1. IMPORTS DO FIREBASE ===
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<script>
+    // === 1. VARIÁVEIS DE ARMAZENAMENTO LOCAL ===
+    const LOCAL_STORAGE_KEY_DATA = 'unopar_crm_data';
+    const LOCAL_STORAGE_KEY_METAS = 'unopar_crm_metas';
 
-    // Ativar logs do Firebase para debug (Obrigatório em ambientes Canvas)
-    setLogLevel('Debug');
-
-    // === 2. VARIÁVEIS GLOBAIS DO CANVAS & FIREBASE ===
-    let db;
-    let auth;
-    let userId = null;
-    let isAuthReady = false;
-
-    // Variáveis injetadas pelo ambiente (Canvas/Teams)
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-    const injectedConfigString = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
-
-    let firebaseConfig = null; // Começa como nulo
-    let configSource = 'Ausente/Inválida';
-
-    // Tenta obter e parsear a configuração real do Firebase, se disponível.
-    try {
-        if (injectedConfigString && injectedConfigString.trim() !== '' && injectedConfigString !== 'null' && injectedConfigString !== 'undefined') {
-            const tempConfig = JSON.parse(injectedConfigString);
-            
-            // Verifica se a configuração injetada tem o mínimo necessário para ser considerada "válida" (sintaticamente)
-            if (tempConfig.apiKey && tempConfig.projectId) {
-                firebaseConfig = tempConfig;
-                configSource = 'Injetada (Teams/Canvas)';
-                console.log("SUCESSO: Configuração injetada e JSON lido.");
-            } else {
-                 configSource = 'Injetada, mas incompleta (faltando apiKey ou projectId)';
-            }
-        } else {
-            console.error("ERRO CRÍTICO: Configuração do Firebase não injetada ou vazia.");
-        }
-    } catch (e) {
-        configSource = `Falha ao Decodificar JSON: ${e.message}`;
-        console.error("ERRO CRÍTICO: Falha ao decodificar __firebase_config.", e);
-    }
-    
-    // Caminhos Firestore
-    const CONFIG_DOC_PATH = (uid) => `artifacts/${appId}/users/${uid}/config/metas`;
-    const DAILY_COLLECTION_PATH = (uid) => `artifacts/${appId}/users/${uid}/registros_diarios`;
-
-    // Metas em memória
+    // Metas em memória (padrão inicial)
     let metasConfig = {
         meta_matricula: 400,
         meta_rematricula: 773,
         meta_total: 1173
     };
 
-    // Dados do último registro em memória
+    // Dados de registro em memória (array)
+    let registrosDiarios = [];
     let ultimoRegistro = null;
+    let registroFiltrado = null; // Para guardar o registro se o filtro estiver ativo
 
 
-    // === 3. FUNÇÕES DE UTILIDADE E UI ===
+    // === 2. FUNÇÕES DE UTILIDADE E ARMAZENAMENTO ===
 
     /**
      * Função para exibir notificações Toast.
-     * @param {string} message - A mensagem a ser exibida.
-     * @param {'success'|'error'|'info'|'fatal'} type - O tipo de notificação.
      */
     function showNotification(message, type = 'info') {
         const container = document.getElementById('toast-container');
@@ -671,45 +617,16 @@
 
         setTimeout(() => {
             toast.classList.add('show');
-        }, 10); // Pequeno atraso para garantir a transição
+        }, 10); 
 
         setTimeout(() => {
             toast.classList.remove('show');
             toast.addEventListener('transitionend', () => toast.remove());
         }, 5000);
     }
-
+    
     /**
-     * Função para mostrar o Erro Crítico na Tela
-     * @param {string} errorMessage - Mensagem de erro.
-     * @param {object} attemptedConfig - Configuração do Firebase que foi usada (ou tentada).
-     */
-    function showCriticalErrorScreen(errorMessage, attemptedConfig) {
-        const screen = document.getElementById('critical-error-screen');
-        const configDisplay = document.getElementById('error-config-display');
-        
-        // CUIDADO: Ofusca dados sensíveis para não expor acidentalmente o token na tela (embora o token nunca devesse ser exposto).
-        const displayData = {
-            'Configuração de Origem': configSource,
-            'App ID do Canvas': appId,
-            'Token Inicial de Auth': initialAuthToken ? initialAuthToken.substring(0, 8) + '...' : 'NÃO INJETADO',
-            'Mensagem de Erro (SDK)': errorMessage,
-            'Configuração Tentada (Chave API ofuscada)': attemptedConfig 
-                ? JSON.stringify({ ...attemptedConfig, apiKey: attemptedConfig.apiKey ? attemptedConfig.apiKey.substring(0, 4) + '...' : 'N/A' }, null, 2)
-                : 'Configuração Injetada Estava Nula ou Inválida.'
-        }
-        
-        // Formata a saída para o <pre>
-        configDisplay.textContent = JSON.stringify(displayData, null, 2);
-        
-        // Esconde o app principal e mostra a tela de erro
-        document.getElementById('dashboard-app').style.display = 'none';
-        screen.style.display = 'block';
-    }
-
-
-    /**
-     * Formata a data de Date object para YYYY-MM-DD (Firestore ID).
+     * Formata a data de Date object para YYYY-MM-DD (ID e Input Date).
      * @param {Date} date - Objeto Date.
      * @returns {string} - Data formatada (YYYY-MM-DD).
      */
@@ -721,172 +638,70 @@
     }
 
     /**
-     * Formata a data de Date object para DD/MM/YYYY (Display UI).
-     * @param {Date} date - Objeto Date.
+     * Formata a data de YYYY-MM-DD (ID) para DD/MM/YYYY (Display UI).
+     * @param {string} dateID - Data no formato YYYY-MM-DD.
      * @returns {string} - Data formatada (DD/MM/YYYY).
      */
-    function formatDateDisplay(date) {
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        return `${dd}/${mm}/${yyyy}`;
+    function formatDateDisplay(dateID) {
+        if (!dateID) return 'N/A';
+        const parts = dateID.split('-');
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
-    /**
-     * Função para habilitar/desabilitar os botões interativos
-     * @param {boolean} enabled - true para habilitar, false para desabilitar
-     */
-    function setControlsEnabled(enabled) {
-        document.getElementById('openModalBtn').disabled = !enabled;
-        document.getElementById('openConfigBtn').disabled = !enabled;
-        document.getElementById('btn-filtrar').disabled = !enabled;
+    // --- Funções de LocalStorage ---
+
+    function loadMetas() {
+        const storedMetas = localStorage.getItem(LOCAL_STORAGE_KEY_METAS);
+        if (storedMetas) {
+            metasConfig = JSON.parse(storedMetas);
+            // Garante que o total é calculado, caso a versão salva não tenha
+            metasConfig.meta_total = (metasConfig.meta_matricula || 0) + (metasConfig.meta_rematricula || 0);
+        }
+        // Sempre atualiza os KPIs de meta na tela
+        document.getElementById("kpi-meta-mat").textContent = metasConfig.meta_matricula;
+        document.getElementById("kpi-meta-remat").textContent = metasConfig.meta_rematricula;
     }
 
+    function saveMetas() {
+        localStorage.setItem(LOCAL_STORAGE_KEY_METAS, JSON.stringify(metasConfig));
+        showNotification('Configuração de Metas salva localmente!', 'success');
+    }
 
-    // === 4. INICIALIZAÇÃO DO FIREBASE & AUTENTICAÇÃO ===
-    async function initializeFirebase() {
+    function loadRegistros() {
+        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY_DATA);
+        if (storedData) {
+            registrosDiarios = JSON.parse(storedData);
+        }
+        // Ordena do mais recente para o mais antigo (data_id é YYYY-MM-DD)
+        registrosDiarios.sort((a, b) => b.data_id.localeCompare(a.data_id));
         
-        // Desabilita botões preventivamente e esconde a dashboard
-        setControlsEnabled(false);
-        document.getElementById('dashboard-app').style.display = 'none';
-
-        // 1. VERIFICAÇÃO CRÍTICA: Se firebaseConfig for null neste ponto, o JSON falhou na leitura/estrutura mínima.
-        if (!firebaseConfig) {
-            const errorMsg = "Configuração do Firebase não pôde ser lida. Credenciais ausentes ou JSON inválido.";
-            console.error("ERRO FATAL (Pré-SDK):", errorMsg);
-            
-            // Exibir a tela de erro fatal sem tentar a inicialização do Firebase SDK
-            showCriticalErrorScreen(errorMsg, firebaseConfig); // firebaseConfig será null aqui
-            return;
-        }
-
-        try {
-            // 2. Inicializa o App (firebaseConfig agora é garantido ser sintaticamente válido)
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            let userCredential = null;
-
-            // 3. Tenta fazer login com o token personalizado
-            if (initialAuthToken) {
-                try {
-                    userCredential = await signInWithCustomToken(auth, initialAuthToken);
-                } catch (e) {
-                    // Este erro é esperado se o token não for injetado corretamente.
-                    console.warn("Token injetado inválido ou expirado. Tentando autenticação anônima...", e.code);
-                    // Continua para o bloco anônimo abaixo
-                }
-            }
-
-            // 4. Se não autenticou com o token ou se não havia token, tenta anonimamente
-            if (!userCredential) {
-                userCredential = await signInAnonymously(auth);
-            }
-
-
-            if (userCredential && userCredential.user) {
-                // Autenticação bem sucedida
-                userId = userCredential.user.uid;
-                isAuthReady = true;
-                console.log("Firebase Auth e Firestore prontos. User ID:", userId);
-                document.getElementById('current-user-id').textContent = `(ID: ${userId})`;
-                
-                // Oculta a tela de erro e habilita botões e mostra a dashboard
-                document.getElementById('critical-error-screen').style.display = 'none';
-                document.getElementById('dashboard-app').style.display = 'block';
-                setControlsEnabled(true);
-                
-                // 5. Inicia os listeners de dados
-                startFirestoreListeners(userId);
-                showNotification("Conexão ao Firebase estabelecida com sucesso!", 'success');
-            } else {
-                // Isso só deve acontecer se signInAnonymously falhar por algum motivo
-                throw new Error("Falha na autenticação. Usuário não encontrado após tentativas.");
-            }
-
-        } catch (error) {
-            // Captura erros gerais de inicialização/autenticação, incluindo a falha "auth/api-key-not-valid"
-            console.error("Erro CRÍTICO ao inicializar Firebase ou Autenticar:", error);
-            const errorMessage = error.code ? `Erro Código: ${error.code} - ${error.message}` : error.toString();
-            // Esta chamada vai exibir o erro, usando a configuração (funcionalmente inválida) que tentamos usar
-            showCriticalErrorScreen(`Erro de Inicialização do SDK: ${errorMessage}`, firebaseConfig);
-            setControlsEnabled(false); 
-        }
+        // Define o último registro (o primeiro no array ordenado)
+        ultimoRegistro = registrosDiarios.length > 0 ? registrosDiarios[0] : null;
+        
+        // Garante que o app sempre renderize o último registro (ou o filtrado) ao carregar
+        carregarDadosNaTela(registroFiltrado || ultimoRegistro);
     }
 
+    function saveRegistro(newRegistro) {
+        // Encontra o índice do registro existente (se houver) pelo data_id
+        const existingIndex = registrosDiarios.findIndex(r => r.data_id === newRegistro.data_id);
 
-    // === 5. LISTENERS DO FIRESTORE (TEMPO REAL) ===
+        if (existingIndex !== -1) {
+            // Atualiza o registro existente
+            registrosDiarios[existingIndex] = newRegistro;
+            showNotification(`Registro de ${newRegistro.data_display} atualizado localmente!`, 'success');
+        } else {
+            // Adiciona novo registro
+            registrosDiarios.push(newRegistro);
+            showNotification(`Novo registro de ${newRegistro.data_display} salvo localmente!`, 'success');
+        }
 
-    function startFirestoreListeners(uid) {
-        // --- Listener 1: Metas (Configurações) ---
-        onSnapshot(doc(db, CONFIG_DOC_PATH(uid)), (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                const newMetas = docSnapshot.data();
-                metasConfig = {
-                    // Usando 0 como fallback para garantir que sejam números
-                    meta_matricula: Number(newMetas.meta_matricula) || 0,
-                    meta_rematricula: Number(newMetas.meta_rematricula) || 0
-                };
-                metasConfig.meta_total = metasConfig.meta_matricula + metasConfig.meta_rematricula;
-                
-                // Atualiza KPIs de Meta na tela
-                document.getElementById("kpi-meta-mat").textContent = metasConfig.meta_matricula;
-                document.getElementById("kpi-meta-remat").textContent = metasConfig.meta_rematricula;
-
-                // Recarrega dashboard com a nova meta e o último registro
-                carregarDadosNaTela(ultimoRegistro);
-            } else {
-                console.log("Documento de Metas não encontrado. Usando padrões e salvando...");
-                // Se não existir, salva o padrão inicial
-                setDoc(doc(db, CONFIG_DOC_PATH(uid)), metasConfig, { merge: true }).catch(e => console.error("Erro ao salvar metas padrão:", e));
-            }
-        }, (error) => {
-            console.error("Erro no Listener de Metas:", error);
-            if (error.code === 'permission-denied') {
-                showNotification("ERRO CRÍTICO: Permissão Negada para ler Metas. Verifique suas Regras.", 'error');
-            } else {
-                showNotification("Erro ao sincronizar Metas (Rede ou Acesso).", 'error');
-            }
-        });
-
-        // --- Listener 2: Último Registro Diário ---
-        // Usamos orderBy("data_id", "desc") onde data_id é YYYY-MM-DD para funcionar como ordem cronológica.
-        const q = query(
-            collection(db, DAILY_COLLECTION_PATH(uid)),
-            // ATENÇÃO: É NECESSÁRIO UM ÍNDICE COMPOSTO PARA ESTE TIPO DE ORDENAÇÃO
-            // COMO NÃO PODEMOS CRIAR ÍNDICES, O onSnapshot COM orderBy PODE FALHAR EM TEMPO DE EXECUÇÃO.
-            // Pelo escopo deste projeto, assumiremos a necessidade de índices prontos para orderBy.
-            orderBy("data_id", "desc"), 
-            limit(1)
-        );
-
-        onSnapshot(q, (snapshot) => {
-            if (!snapshot.empty) {
-                const latestDoc = snapshot.docs[0];
-                ultimoRegistro = latestDoc.data();
-                carregarDadosNaTela(ultimoRegistro);
-            } else {
-                ultimoRegistro = null;
-                carregarDadosNaTela(null);
-                document.getElementById("chart-data-registro").textContent = 'Data: Nenhum Registro';
-            }
-        }, (error) => {
-            console.error("Erro no Listener de Registros Diários:", error);
-            if (error.code === 'permission-denied') {
-                showNotification("ERRO CRÍTICO: Permissão Negada para ler Registros. Verifique suas Regras.", 'error');
-            } else {
-                // Mensagem de erro que indica a possível falta de índice no orderBy
-                 if (error.message.includes('The query requires an index')) {
-                    showNotification("Erro: A busca em tempo real falhou por falta de índice Firestore (orderBy). O filtro de data ainda deve funcionar.", 'error');
-                 } else {
-                    showNotification("Erro ao sincronizar Registros Diários (Rede ou Acesso).", 'error');
-                 }
-            }
-        });
+        // Re-salva e re-carrega para atualizar a tela
+        localStorage.setItem(LOCAL_STORAGE_KEY_DATA, JSON.stringify(registrosDiarios));
+        loadRegistros(); 
     }
 
-    // === 6. FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO ===
+    // === 3. FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO ===
 
     function carregarDadosNaTela(dados) {
         let totalAtivos = 0;
@@ -938,60 +753,72 @@
             document.getElementById("chart-documentacao-regular").textContent = `0 Regulares | 0 Irregulares`;
             document.getElementById("chart-modalidade-semi").textContent = `0 Semi | 0 Online`;
             document.getElementById("chart-evasao-trancada").textContent = `0 Evasão | T:0 C:0`;
-            // Não zera kpi-meta-mat e kpi-meta-remat pois eles vêm da configuração
+            document.getElementById("chart-data-registro").textContent = `Data: Não Registrado`;
             document.getElementById("chart-status-ativos").textContent = `N/A Status`;
         }
 
-        // 4. Atualizar KPIs principais (sempre atualiza, mesmo que dados seja null)
+        // 4. Atualizar KPIs principais
         document.getElementById("kpi-ativos").textContent = totalAtivos;
         document.getElementById("kpi-progresso").textContent = `${progresso}%`;
         
-        // 5. Atualiza a barra de progresso visual (usando o elemento específico)
+        // 5. Atualiza a barra de progresso visual
         progressoBar.style.width = `${Math.min(progresso, 100)}%`;
 
         console.log(`Dados carregados na tela. Ativos: ${totalAtivos}, Progresso: ${progresso}%`);
     }
 
-    // === 7. LÓGICA DO MODAL DE DADOS DIÁRIOS ===
+    // === 4. LÓGICA DO MODAL DE DADOS DIÁRIOS ===
     const dataModal = document.getElementById("dataModal");
     const openDataBtn = document.getElementById("openModalBtn");
     const dataCloseBtn = document.getElementsByClassName("data-close-btn")[0];
     const dataForm = document.getElementById("dataForm");
     const inputDataDisplay = document.getElementById("input-data-display");
-    const inputDataFirestore = document.getElementById("input-data-firestore");
+    const inputDataId = document.getElementById("input-data-id");
 
     openDataBtn.onclick = function() {
-        if (!isAuthReady) {
-             showNotification("Aguarde a inicialização da autenticação (Firebase).", 'error');
-             return;
-        }
-
         const today = new Date();
-        // Preenche a data no formato de exibição (DD/MM/YYYY)
-        inputDataDisplay.value = formatDateDisplay(today);
-        // Preenche a data no formato de ID (YYYY-MM-DD)
-        inputDataFirestore.value = formatDateID(today);
+        const todayID = formatDateID(today);
+
+        // Verifica se já existe um registro para hoje para carregar no formulário
+        const existingRecord = registrosDiarios.find(r => r.data_id === todayID);
         
-        dataModal.style.display = "block";
-        document.getElementById('saveDataBtn').textContent = 'Salvar Registro';
-        document.getElementById('saveDataBtn').disabled = false;
-        
-        // Limpa os campos do formulário ao abrir (exceto datas)
+        // Preenche a data (display e ID)
+        inputDataDisplay.value = formatDateDisplay(todayID);
+        inputDataId.value = todayID;
+
+        // Limpa ou preenche os campos do formulário
         dataForm.reset(); 
+        if (existingRecord) {
+            document.getElementById("input-adimplente").value = existingRecord.adimplente || 0;
+            document.getElementById("input-inadimplente").value = existingRecord.inadimplente || 0;
+            document.getElementById("input-ativa").value = existingRecord.ativa || 0;
+            document.getElementById("input-formando").value = existingRecord.formando || 0;
+            document.getElementById("input-ath-calouros").value = existingRecord.ath_calouros || 0;
+            document.getElementById("input-ath-veterano").value = existingRecord.ath_veterano || 0;
+            document.getElementById("input-doc-reg").value = existingRecord.doc_regular || 0;
+            document.getElementById("input-doc-irre").value = existingRecord.doc_irre || 0;
+            document.getElementById("input-semipresencial").value = existingRecord.semipresencial || 0;
+            document.getElementById("input-100-online").value = existingRecord.online_100 || 0;
+            document.getElementById("input-trancada").value = existingRecord.trancada || 0;
+            document.getElementById("input-cancelada").value = existingRecord.cancelada || 0;
+            document.getElementById("input-nao-efet").value = existingRecord.nao_efet_mat || 0;
+            document.getElementById("input-calouro-ext").value = existingRecord.calouro_ext || 0;
+            document.getElementById('saveDataBtn').textContent = 'Atualizar Registro';
+        } else {
+             document.getElementById('saveDataBtn').textContent = 'Salvar Novo Registro';
+        }
+        
+        document.getElementById('saveDataBtn').disabled = false;
+        dataModal.style.display = "block";
     }
 
     dataCloseBtn.onclick = function() { dataModal.style.display = "none"; }
 
-    dataForm.onsubmit = async function(event) {
+    dataForm.onsubmit = function(event) {
         event.preventDefault();
         
-        if (!isAuthReady || !userId) {
-            showNotification("Aguarde a inicialização do Firebase.", 'error');
-            return;
-        }
-
-        const dataId = inputDataFirestore.value; // YYYY-MM-DD
-        const dataDisplay = inputDataDisplay.value; // DD/MM/YYYY
+        const dataId = inputDataId.value; 
+        const dataDisplay = inputDataDisplay.value; 
 
         const submitBtn = document.getElementById('saveDataBtn');
         submitBtn.textContent = 'Salvando...';
@@ -1020,27 +847,13 @@
             nao_efet_mat: getFormValue("input-nao-efet")
         };
 
-        try {
-            const docRef = doc(db, DAILY_COLLECTION_PATH(userId), dataId);
-            await setDoc(docRef, formData);
-            
-            showNotification(`Registro de ${dataDisplay} salvo com sucesso no Firestore!`, 'success');
-            dataModal.style.display = "none";
-
-        } catch (error) {
-            console.error('Erro ao salvar o registro diário:', error);
-            const errorMessage = error.code && error.code === 'permission-denied' ? 
-                                 'ERRO: Permissão negada. Verifique suas Regras de Segurança.' : 
-                                 'ERRO: Não foi possível salvar o registro no banco de dados. Verifique as regras de segurança.';
-            showNotification(errorMessage, 'error');
-        } finally {
-            submitBtn.textContent = 'Salvar Registro';
-            submitBtn.disabled = false;
-        }
+        saveRegistro(formData);
+        dataModal.style.display = "none";
+        submitBtn.disabled = false;
     }
 
 
-    // === 8. LÓGICA DO MODAL DE CONFIGURAÇÃO (METAS) ===
+    // === 5. LÓGICA DO MODAL DE CONFIGURAÇÃO (METAS) ===
     const configModal = document.getElementById("configModal");
     const openConfigBtn = document.getElementById("openConfigBtn");
     const configCloseBtn = document.getElementsByClassName("config-close-btn")[0];
@@ -1055,11 +868,6 @@
     };
 
     openConfigBtn.onclick = function() {
-        if (!isAuthReady) {
-             showNotification("Aguarde a inicialização da autenticação (Firebase).", 'error');
-             return;
-        }
-
         // Preenche o formulário com os valores atuais antes de abrir
         document.getElementById("config-meta-mat").value = metasConfig.meta_matricula;
         document.getElementById("config-meta-remat").value = metasConfig.meta_rematricula;
@@ -1068,96 +876,109 @@
     }
     configCloseBtn.onclick = function() { configModal.style.display = "none"; }
 
-    configForm.onsubmit = async function(event) {
+    configForm.onsubmit = function(event) {
         event.preventDefault();
         
-        if (!isAuthReady || !userId) {
-            showNotification("Aguarde a inicialização do Firebase.", 'error');
-            return;
-        }
+        metasConfig.meta_matricula = parseInt(document.getElementById("config-meta-mat").value) || 0;
+        metasConfig.meta_rematricula = parseInt(document.getElementById("config-meta-remat").value) || 0;
+        metasConfig.meta_total = metasConfig.meta_matricula + metasConfig.meta_rematricula;
 
-        const newMat = parseInt(document.getElementById("config-meta-mat").value) || 0;
-        const newRemat = parseInt(document.getElementById("config-meta-remat").value) || 0;
-        const newTotal = newMat + newRemat;
-
-        const configData = {
-            meta_matricula: newMat,
-            meta_rematricula: newRemat,
-            meta_total: newTotal
-        };
-
-        const submitBtn = document.getElementById('saveConfigBtn');
-        submitBtn.textContent = 'Salvando...';
-        submitBtn.disabled = true;
-
-        try {
-            const docRef = doc(db, CONFIG_DOC_PATH(userId));
-            // O setDoc aqui acionará o Listener de Metas, que irá recalcular tudo na tela.
-            await setDoc(docRef, configData);
-
-            showNotification(`Metas atualizadas com sucesso! Total: ${newTotal}.`, 'success');
-            configModal.style.display = "none";
-        } catch (error) {
-            console.error('Erro ao salvar a configuração:', error);
-            const errorMessage = error.code && error.code === 'permission-denied' ? 
-                                 'ERRO: Permissão negada. Verifique suas Regras de Segurança.' : 
-                                 'ERRO: Não foi possível salvar as configurações. Verifique as regras de segurança.';
-            showNotification(errorMessage, 'error');
-        } finally {
-            submitBtn.textContent = 'Salvar Configuração';
-            submitBtn.disabled = false;
-        }
+        saveMetas();
+        configModal.style.display = "none";
+        // Recarrega a tela com a nova meta
+        carregarDadosNaTela(registroFiltrado || ultimoRegistro);
     }
 
 
-    // === 9. LÓGICA DO FILTRO DE DATA (BUSCA HISTÓRICA) ===
+    // === 6. LÓGICA DO FILTRO DE DATA (BUSCA HISTÓRICA) ===
     const btnFiltrar = document.getElementById("btn-filtrar");
     const inputFiltroData = document.getElementById("data-filtro");
 
-    btnFiltrar.onclick = async function() {
+    // Limpa o filtro quando o input é esvaziado
+    inputFiltroData.onchange = function() {
+        if (!inputFiltroData.value) {
+            registroFiltrado = null; // Remove o filtro
+            carregarDadosNaTela(ultimoRegistro); // Volta para o último registro
+            showNotification("Filtro de data desativado, exibindo o último registro.", 'info');
+        }
+    }
+
+    btnFiltrar.onclick = function() {
         const dataSelecionada = inputFiltroData.value; // YYYY-MM-DD
         
         if (!dataSelecionada) {
             showNotification("Por favor, selecione uma data para filtrar a visualização.", 'info');
             return;
         }
-        
-        if (!isAuthReady || !userId) {
-            showNotification("Aguarde a inicialização do Firebase.", 'error');
-            return;
-        }
 
-        // Desabilita botão enquanto busca
-        btnFiltrar.disabled = true;
-        btnFiltrar.textContent = 'Buscando...';
+        const dadosFiltrados = registrosDiarios.find(r => r.data_id === dataSelecionada);
 
-        try {
-            const docRef = doc(db, DAILY_COLLECTION_PATH(userId), dataSelecionada);
-            const snapshot = await getDoc(docRef);
-
-            if (snapshot.exists()) {
-                const dadosFiltrados = snapshot.data();
-                // O filtro carrega os dados filtrados. O listener do último registro continua rodando em background.
-                carregarDadosNaTela(dadosFiltrados); 
-                showNotification(`Dados do dia ${dadosFiltrados.data_display} carregados com sucesso.`, 'success');
-            } else {
-                carregarDadosNaTela(null); // Limpa a tela
-                document.getElementById("chart-data-registro").textContent = 'Data: Nenhum Registro Encontrado';
-                showNotification(`Nenhum registro encontrado para a data: ${dataSelecionada}.`, 'info');
-            }
-        } catch (error) {
-            console.error('Erro ao buscar registro por data:', error);
-            const errorMessage = error.code && error.code === 'permission-denied' ? 
-                                 'ERRO: Permissão negada ao buscar histórico.' : 
-                                 'Erro ao buscar dados históricos. Verifique o console.';
-            showNotification(errorMessage, 'error');
-        } finally {
-            btnFiltrar.disabled = false;
-            btnFiltrar.textContent = 'Filtrar';
+        if (dadosFiltrados) {
+            registroFiltrado = dadosFiltrados;
+            carregarDadosNaTela(dadosFiltrados); 
+            showNotification(`Dados do dia ${dadosFiltrados.data_display} carregados com sucesso.`, 'success');
+        } else {
+            registroFiltrado = null;
+            carregarDadosNaTela(null); // Limpa a tela
+            document.getElementById("chart-data-registro").textContent = `Data: ${formatDateDisplay(dataSelecionada)} (Não Encontrado)`;
+            showNotification(`Nenhum registro encontrado para a data: ${formatDateDisplay(dataSelecionada)}.`, 'info');
         }
     }
 
-    // === 10. FECHAR MODAIS E INICIAR APP ===
+    // === 7. LÓGICA DE EXPORTAÇÃO CSV ===
+    document.getElementById('btn-exportar').onclick = function() {
+        if (registrosDiarios.length === 0) {
+            showNotification("Não há dados para exportar.", 'info');
+            return;
+        }
+
+        // 1. Definir Cabeçalhos
+        const headers = [
+            "DATA (YYYY-MM-DD)", "DATA (Display)", "TIMESTAMP", 
+            "ADIMPLEMTE", "INADIMPLENTE", "ATIVA", "FORMANDO", 
+            "DOC REGULAR", "DOC IRREGULAR", "ATH/CALOUROS", "ATH/VETERANO", 
+            "CALOURO/EXT", "SEMIPRESENCIAL", "100% ONLINE", "TRANCADA", 
+            "CANCELADA", "NÃO EFET. MATRÍCULA", 
+            "TOTAL ATIVOS NO DIA" // Coluna calculada
+        ];
+
+        // 2. Mapear Dados
+        const rows = registrosDiarios.map(r => {
+            const totalAtivosDia = (r.ativa || 0) + (r.formando || 0) + (r.ath_calouros || 0) + (r.ath_veterano || 0) + (r.calouro_ext || 0);
+            
+            return [
+                `"${r.data_id}"`, `"${r.data_display}"`, r.timestamp,
+                r.adimplente, r.inadimplente, r.ativa, r.formando,
+                r.doc_regular, r.doc_irre, r.ath_calouros, r.ath_veterano,
+                r.calouro_ext, r.semipresencial, r.online_100, r.trancada,
+                r.cancelada, r.nao_efet_mat,
+                totalAtivosDia
+            ].join(',');
+        }).reverse(); // Exporta do mais antigo para o mais novo para Sheets/Excel
+
+        // 3. Montar CSV
+        const csvContent = [
+            headers.join(','),
+            ...rows
+        ].join('\n');
+
+        // 4. Criar e Baixar o Arquivo
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `CRM_UNOPAR_RECIFE_EXPORT_${formatDateID(new Date())}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showNotification("Dados exportados como CSV! Verifique seus downloads.", 'success');
+    }
+
+    // === 8. FECHAR MODAIS E INICIAR APP ===
     window.onclick = function(event) {
         if (event.target == dataModal) {
             dataModal.style.display = "none";
@@ -1167,8 +988,12 @@
         }
     }
 
-    // Iniciar o Firebase após o carregamento completo da janela.
-    window.onload = initializeFirebase;
+    // Carregar dados e metas ao iniciar
+    window.onload = function() {
+        loadMetas();
+        loadRegistros();
+        showNotification("Modo Local Ativo. Os dados são salvos APENAS neste navegador.", 'warning');
+    };
 
 </script>
 
