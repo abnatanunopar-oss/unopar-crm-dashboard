@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>CRM Unopar Recife - Gestão Integral</title>
+    <title>CRM Unopar MultiPolos | Gestão Integrada</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -12,12 +12,14 @@
         }
         body { background: var(--bg-body); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         #main-app { display: none; flex: 1; width: 100%; height: 100%; }
-        .sidebar { width: 220px; background: #111827; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; }
+        .sidebar { width: 240px; background: #111827; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; }
         .nav-item { padding: 12px 20px; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; transition: 0.3s; }
         .nav-item.active { background: var(--accent); color: white; }
         .main { flex: 1; padding: 20px 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        .dashboard-header { border-bottom: 1px solid var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .dashboard-header { border-bottom: 1px solid var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
         .header-info h1 { margin: 0; font-size: 1.6rem; color: white; }
+        .filters-row { display: flex; gap: 15px; align-items: center; background: var(--bg-card); padding: 8px 15px; border-radius: 40px; }
+        .filters-row select, .filters-row input { background: #0a0f1c; border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 20px; width: auto; }
         .gauge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .gauge-card { background: var(--bg-card); border-radius: 15px; border: 1px solid var(--border); padding: 20px; position: relative; height: 340px; display: flex; flex-direction: column; align-items: center; }
         .gauge-title { font-size: 0.9rem; font-weight: bold; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
@@ -35,406 +37,540 @@
         #login-screen { position: fixed; inset: 0; background: var(--bg-body); z-index: 5000; display: flex; align-items: center; justify-content: center; }
         .login-box { background: var(--bg-card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); width: 350px; text-align: center; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--bg-card); width: 650px; padding: 30px; border-radius: 15px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: var(--bg-card); width: 850px; padding: 30px; border-radius: 15px; border: 1px solid var(--accent); max-height: 90vh; overflow-y: auto; }
         input, select { background: #0a0f1c; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
         .btn-action { background: var(--accent); color: white; border: none; padding: 15px; width: 100%; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; }
-        
         .comp-metric-box { margin-bottom: 15px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; }
         .comp-bar-track { background: #0a0f1c; height: 12px; border-radius: 6px; overflow: hidden; display: flex; margin: 8px 0; border: 1px solid var(--border); }
         .chart-container { background: #0a0f1c; border-radius: 10px; padding: 15px; margin-bottom: 20px; border: 1px solid var(--border); height: 250px; }
+        .inline-label { display: flex; align-items: center; gap: 8px; }
+        .badge-polo { background: var(--accent); padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <div class="login-box">
-            <h2 style="color:var(--accent)">UNOPAR CRM</h2>
-            <input type="email" id="loginEmail" placeholder="E-mail">
-            <input type="password" id="loginPass" placeholder="Senha" style="margin-top:10px">
-            <button class="btn-action" onclick="window.handleLogin()">ENTRAR NO SISTEMA</button>
-            <p id="loginError" style="color:var(--danger); display:none; font-size:0.8rem; margin-top:10px">Acesso negado.</p>
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="color:var(--accent)">UNOPAR CRM MULTIPOLOS</h2>
+        <input type="email" id="loginEmail" placeholder="E-mail">
+        <input type="password" id="loginPass" placeholder="Senha" style="margin-top:10px">
+        <button class="btn-action" onclick="window.handleLogin()">ENTRAR</button>
+        <p id="loginError" style="color:var(--danger); display:none; font-size:0.8rem; margin-top:10px">Acesso negado.</p>
+    </div>
+</div>
+
+<div id="main-app">
+    <aside class="sidebar">
+        <div style="padding: 20px; text-align: center;"><h2 style="color:var(--accent)">UNOPAR</h2><span style="font-size:12px">Multipolos</span></div>
+        <nav style="flex:1">
+            <div class="nav-item active" onclick="location.reload()"><i class="fas fa-chart-line"></i> Dashboard</div>
+            <div class="nav-item" onclick="window.toggleM('modComp', true)"><i class="fas fa-balance-scale"></i> Comparativo</div>
+            <div class="nav-item" onclick="window.openEditor()"><i class="fas fa-edit"></i> Editar Dados</div>
+            <div class="nav-item" onclick="window.toggleM('modMeta', true)"><i class="fas fa-bullseye"></i> Metas por Polo</div>
+        </nav>
+        <button onclick="window.handleLogout()" style="background:none; border:1px solid var(--danger); color:var(--danger); margin:20px; padding:10px; border-radius:6px; cursor:pointer">Sair</button>
+    </aside>
+
+    <main class="main">
+        <header class="dashboard-header">
+            <div class="header-info">
+                <h1>Gestão de Polos <span id="active-polo-badge" class="badge-polo">Recife</span></h1>
+                <p style="color:var(--muted); font-size:0.9rem">Ciclo ativo: <span id="active-ciclo-name" style="color:var(--accent)">---</span> | Data base</p>
+            </div>
+            <div class="filters-row">
+                <div class="inline-label"><i class="fas fa-store"></i> <select id="poloSelector" onchange="window.changePolo()"><option value="all">🌍 Todos (Geral)</option></select></div>
+                <div class="inline-label"><i class="fas fa-calendar"></i> <input type="date" id="dateFilter" onchange="window.changeMainDate()"></div>
+            </div>
+        </header>
+
+        <div class="gauge-grid">
+            <div class="gauge-card"><div class="gauge-title"><i class="fas fa-user-plus"></i> Matrícula</div>
+                <div class="gauge-wrapper"><canvas id="cMat"></canvas><div class="gauge-labels"><span class="label-meta-top">META</span><span class="label-meta-center" id="lbl-mMat">0</span></div>
+                <span id="tip-vMat" class="pointer-value">0</span></div>
+            </div>
+            <div class="gauge-card"><div class="gauge-title"><i class="fas fa-user-check"></i> Rematrícula</div>
+                <div class="gauge-wrapper"><canvas id="cRemat"></canvas><div class="gauge-labels"><span class="label-meta-top">META</span><span class="label-meta-center" id="lbl-mRemat">0</span></div>
+                <span id="tip-vRemat" class="pointer-value">0</span></div>
+            </div>
+            <div class="gauge-card"><div class="gauge-title"><i class="fas fa-users"></i> Base Total</div>
+                <div class="gauge-wrapper"><canvas id="cTotal"></canvas><div class="gauge-labels"><span class="label-meta-top">META TOTAL</span><span class="label-meta-center" id="lbl-mTotal">0</span></div>
+                <span id="tip-vTotal" class="pointer-value">0</span></div>
+            </div>
         </div>
-    </div>
 
-    <div id="main-app">
-        <aside class="sidebar">
-            <div style="padding: 20px; text-align: center;"><h2 style="color:var(--accent)">UNOPAR</h2></div>
-            <nav style="flex:1">
-                <div class="nav-item active" onclick="location.reload()"><i class="fas fa-chart-line"></i> Dashboard</div>
-                <div class="nav-item" onclick="window.toggleM('modComp', true)"><i class="fas fa-balance-scale"></i> Comparativo</div>
-                <div class="nav-item" onclick="window.openEditor()"><i class="fas fa-edit"></i> Editar Dados</div>
-                <div class="nav-item" onclick="window.toggleM('modMeta', true)"><i class="fas fa-bullseye"></i> Ajustar Metas</div>
-            </nav>
-            <button onclick="window.handleLogout()" style="background:none; border:1px solid var(--danger); color:var(--danger); margin:20px; padding:10px; border-radius:6px; cursor:pointer">Sair</button>
-        </aside>
-
-        <main class="main">
-            <header class="dashboard-header">
-                <div class="header-info">
-                    <h1>CRM Unopar Recife - Visão Geral</h1>
-                    <p style="color:var(--muted); font-size:0.9rem">Monitoramento Ciclo: <span id="active-ciclo-name" style="color:var(--accent)">---</span></p>
-                </div>
-                <input type="date" id="dateFilter" onchange="window.changeMainDate()">
-            </header>
-
-            <div class="gauge-grid">
-                <div class="gauge-card">
-                    <div class="gauge-title"><i class="fas fa-user-plus"></i> Matrícula</div>
-                    <div class="gauge-wrapper"><canvas id="cMat"></canvas>
-                        <div class="gauge-labels"><span class="label-meta-top">META</span><span class="label-meta-center" id="lbl-mMat">0</span></div>
-                        <span id="tip-vMat" class="pointer-value">0</span>
-                    </div>
-                </div>
-                <div class="gauge-card">
-                    <div class="gauge-title"><i class="fas fa-user-check"></i> Rematrícula</div>
-                    <div class="gauge-wrapper"><canvas id="cRemat"></canvas>
-                        <div class="gauge-labels"><span class="label-meta-top">META</span><span class="label-meta-center" id="lbl-mRemat">0</span></div>
-                        <span id="tip-vRemat" class="pointer-value">0</span>
-                    </div>
-                </div>
-                <div class="gauge-card">
-                    <div class="gauge-title"><i class="fas fa-users"></i> Base Total</div>
-                    <div class="gauge-wrapper"><canvas id="cTotal"></canvas>
-                        <div class="gauge-labels"><span class="label-meta-top">META TOTAL</span><span class="label-meta-center" id="lbl-mTotal">0</span></div>
-                        <span id="tip-vTotal" class="pointer-value">0</span>
-                    </div>
-                </div>
+        <div class="details-grid">
+            <div class="info-card"><div class="info-header"><i class="fas fa-file-invoice-dollar" style="color:var(--success)"></i><h4>Financeiro</h4></div>
+                <div class="stat-line"><span>Adimplentes</span><span id="txt-adim">0</span></div><div class="progress-bg"><div id="bar-adim" class="progress-fill" style="background:var(--success)"></div></div>
+                <div class="stat-line"><span>Inadimplentes</span><span id="txt-inad">0</span></div><div class="progress-bg"><div id="bar-inad" class="progress-fill" style="background:var(--danger)"></div></div>
             </div>
-
-            <div class="details-grid">
-                <div class="info-card">
-                    <div class="info-header"><i class="fas fa-file-invoice-dollar" style="color:var(--success)"></i><h4>Financeiro</h4></div>
-                    <div class="stat-line"><span>Adimplentes</span><span id="txt-adim">0</span></div>
-                    <div class="progress-bg"><div id="bar-adim" class="progress-fill" style="background:var(--success)"></div></div>
-                    <div class="stat-line"><span>Inadimplentes</span><span id="txt-inad">0</span></div>
-                    <div class="progress-bg"><div id="bar-inad" class="progress-fill" style="background:var(--danger)"></div></div>
-                </div>
-                <div class="info-card">
-                    <div class="info-header"><i class="fas fa-user-slash" style="color:var(--danger)"></i><h4>Evasão</h4></div>
-                    <div class="stat-line"><span>Trancadas</span><span id="txt-tranc">0</span></div>
-                    <div class="progress-bg"><div id="bar-tranc" class="progress-fill" style="background:#f59e0b"></div></div>
-                    <div class="stat-line"><span>Canceladas</span><span id="txt-canc">0</span></div>
-                    <div class="progress-bg"><div id="bar-canc" class="progress-fill" style="background:var(--danger)"></div></div>
-                </div>
-                <div class="info-card">
-                    <div class="info-header"><i class="fas fa-id-card" style="color:var(--accent)"></i><h4>Documentação</h4></div>
-                    <div class="stat-line"><span>Regular</span><span id="txt-dreg">0</span></div>
-                    <div class="progress-bg"><div id="bar-dreg" class="progress-fill" style="background:var(--success)"></div></div>
-                    <div class="stat-line"><span>Irregular</span><span id="txt-dirreg">0</span></div>
-                    <div class="progress-bg"><div id="bar-dirreg" class="progress-fill" style="background:#f59e0b"></div></div>
-                </div>
-                <div class="info-card">
-                    <div class="info-header"><i class="fas fa-university" style="color:#7367f0"></i><h4>Modalidades</h4></div>
-                    <div class="stat-line"><span>Semipresencial</span><span id="txt-semi">0</span></div>
-                    <div class="progress-bg"><div id="bar-semi" class="progress-fill" style="background:var(--accent)"></div></div>
-                    <div class="stat-line"><span>100% Online</span><span id="txt-on">0</span></div>
-                    <div class="progress-bg"><div id="bar-on" class="progress-fill" style="background:#7367f0"></div></div>
-                </div>
-                <div class="info-card">
-                    <div class="info-header"><i class="fas fa-bolt" style="color:#f59e0b"></i><h4>Dynamics ATH</h4></div>
-                    <div class="stat-line"><span>ATH Calouros</span><span id="txt-ath-c">0</span></div>
-                    <div class="progress-bg"><div id="bar-ath-c" class="progress-fill" style="background:var(--accent)"></div></div>
-                    <div class="stat-line"><span>ATH Veteranos</span><span id="txt-ath-v">0</span></div>
-                    <div class="progress-bg"><div id="bar-ath-v" class="progress-fill" style="background:#f59e0b"></div></div>
-                </div>
+            <div class="info-card"><div class="info-header"><i class="fas fa-user-slash" style="color:var(--danger)"></i><h4>Evasão</h4></div>
+                <div class="stat-line"><span>Trancadas</span><span id="txt-tranc">0</span></div><div class="progress-bg"><div id="bar-tranc" class="progress-fill" style="background:#f59e0b"></div></div>
+                <div class="stat-line"><span>Canceladas</span><span id="txt-canc">0</span></div><div class="progress-bg"><div id="bar-canc" class="progress-fill" style="background:var(--danger)"></div></div>
             </div>
-        </main>
-    </div>
-
-    <div id="modComp" class="modal">
-        <div class="modal-content" style="width:800px">
-            <h3 style="margin-bottom:20px"><i class="fas fa-balance-scale"></i> Análise de Evolução Dinâmica</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; margin-bottom:20px">
-                <div>
-                    <label>Ponto A (Referência)</label>
-                    <select id="selCicloA" onchange="window.runComp()" style="margin-bottom:10px"></select>
-                    <input type="date" id="selDataA" onchange="window.runComp()">
-                </div>
-                <div>
-                    <label>Ponto B (Comparação)</label>
-                    <select id="selCicloB" onchange="window.runComp()" style="margin-bottom:10px"></select>
-                    <input type="date" id="selDataB" onchange="window.runComp()">
-                </div>
+            <div class="info-card"><div class="info-header"><i class="fas fa-id-card" style="color:var(--accent)"></i><h4>Documentação</h4></div>
+                <div class="stat-line"><span>Regular</span><span id="txt-dreg">0</span></div><div class="progress-bg"><div id="bar-dreg" class="progress-fill" style="background:var(--success)"></div></div>
+                <div class="stat-line"><span>Irregular</span><span id="txt-dirreg">0</span></div><div class="progress-bg"><div id="bar-dirreg" class="progress-fill" style="background:#f59e0b"></div></div>
             </div>
-            <div class="chart-container"><canvas id="compLineChart"></canvas></div>
-            <div id="compResult"></div>
-            <button class="btn-action" style="background:transparent; border:1px solid var(--border); color:var(--muted)" onclick="window.toggleM('modComp', false)">FECHAR</button>
+            <div class="info-card"><div class="info-header"><i class="fas fa-university" style="color:#7367f0"></i><h4>Modalidades</h4></div>
+                <div class="stat-line"><span>Semipresencial</span><span id="txt-semi">0</span></div><div class="progress-bg"><div id="bar-semi" class="progress-fill" style="background:var(--accent)"></div></div>
+                <div class="stat-line"><span>100% Online</span><span id="txt-on">0</span></div><div class="progress-bg"><div id="bar-on" class="progress-fill" style="background:#7367f0"></div></div>
+            </div>
+            <div class="info-card"><div class="info-header"><i class="fas fa-bolt" style="color:#f59e0b"></i><h4>Dynamics ATH</h4></div>
+                <div class="stat-line"><span>ATH Calouros</span><span id="txt-ath-c">0</span></div><div class="progress-bg"><div id="bar-ath-c" class="progress-fill" style="background:var(--accent)"></div></div>
+                <div class="stat-line"><span>ATH Veteranos</span><span id="txt-ath-v">0</span></div><div class="progress-bg"><div id="bar-ath-v" class="progress-fill" style="background:#f59e0b"></div></div>
+            </div>
         </div>
-    </div>
+    </main>
+</div>
 
-    <div id="modAlim" class="modal">
-        <div class="modal-content">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px">
-                <h3>Lançar Indicadores</h3>
-                <input type="date" id="modalDatePicker" onchange="window.loadDataToModal()" onblur="window.checkDateEmpty()" style="width:150px">
-            </div>
-            <form id="fDados">
-                <div style="margin-bottom:15px"><label>Ciclo Destino</label><select name="ciclo" id="modalCicloSelect"></select></div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-                    <div><label>Adimplentes</label><input type="number" name="adim"></div>
-                    <div><label>Inadimplentes</label><input type="number" name="inad"></div>
-                    <div><label>PTC Calouros</label><input type="number" name="ptc_c"></div>
-                    <div><label>Pré Confirmada</label><input type="number" name="pre_conf"></div>
-                    <div><label>PTC Veteranos</label><input type="number" name="ptc_v"></div>
-                    <div><label>Doc Regular</label><input type="number" name="d_reg"></div>
-                    <div><label>Doc Irregular</label><input type="number" name="d_irreg"></div>
-                    <div><label>Semipresencial</label><input type="number" name="m_semi"></div>
-                    <div><label>100% Online</label><input type="number" name="m_on"></div>
-                    <div><label>Trancadas</label><input type="number" name="tranc"></div>
-                    <div><label>Canceladas</label><input type="number" name="canc"></div>
-                    <div><label>Ativa (Alunos Ativos)</label><input type="number" name="m_ativa"></div>
-                    <div><label>Formandos</label><input type="number" name="formandos"></div>
-                    <div><label>Mat. não efetivada</label><input type="number" name="mat_nao_pago"></div>
-                </div>
-                <button type="submit" class="btn-action">ATUALIZAR DADOS</button>
-                <button type="button" class="btn-action" style="background:transparent; color:var(--muted)" onclick="window.toggleM('modAlim', false)">CANCELAR</button>
-            </form>
+<!-- MODAL COMPARATIVO MULTIPOLO -->
+<div id="modComp" class="modal">
+    <div class="modal-content" style="width:900px">
+        <h3><i class="fas fa-balance-scale"></i> Comparação entre Contextos (Polo/Ciclo/Data)</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; background:rgba(0,0,0,0.2); padding:15px; border-radius:10px; margin-bottom:20px">
+            <div><label>Ponto A - Polo</label><select id="compPoloA"></select>
+                <label>Ciclo</label><select id="selCicloA" onchange="window.runComp()"></select>
+                <label>Data</label><input type="date" id="selDataA" onchange="window.runComp()"></div>
+            <div><label>Ponto B - Polo</label><select id="compPoloB"></select>
+                <label>Ciclo</label><select id="selCicloB" onchange="window.runComp()"></select>
+                <label>Data</label><input type="date" id="selDataB" onchange="window.runComp()"></div>
         </div>
+        <div class="chart-container"><canvas id="compLineChart"></canvas></div>
+        <div id="compResult"></div>
+        <button class="btn-action" style="background:transparent; border:1px solid var(--border); color:var(--muted)" onclick="window.toggleM('modComp', false)">FECHAR</button>
     </div>
+</div>
 
-    <div id="modMeta" class="modal">
-        <div class="modal-content" style="width:350px">
-            <h3>Metas e Ciclos</h3>
-            <label>Criar Ciclo</label>
-            <div style="display:flex; gap:5px; margin-bottom:15px">
-                <input type="text" id="newCName" placeholder="Ex: 2026.1">
-                <button onclick="window.addCiclo()" style="background:var(--success); border:none; padding:10px; border-radius:6px; color:white">ADC</button>
-            </div>
-            <label>Ciclo Ativo</label><select id="activeCicloSelect" onchange="window.loadMeta()"></select>
-            <label style="margin-top:10px">Meta Matrícula</label><input type="number" id="inMMat">
-            <label style="margin-top:10px">Meta Rematrícula</label><input type="number" id="inMRemat">
-            <button class="btn-action" onclick="window.saveMetas()">SALVAR CONFIGURAÇÃO</button>
-            <button type="button" class="btn-action" style="background:transparent; color:var(--muted)" onclick="window.toggleM('modMeta', false)">FECHAR</button>
+<!-- MODAL EDITAR DADOS (com polo) -->
+<div id="modAlim" class="modal">
+    <div class="modal-content">
+        <div style="display:flex; justify-content:space-between; margin-bottom:20px; gap:10px; flex-wrap:wrap">
+            <h3>Lançar Indicadores por Polo</h3>
+            <select id="modalPoloSelect" style="width:160px"></select>
+            <input type="date" id="modalDatePicker" onchange="window.loadDataToModal()" style="width:150px">
         </div>
+        <form id="fDados">
+            <div style="margin-bottom:15px"><label>Ciclo Destino</label><select name="ciclo" id="modalCicloSelect"></select></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                <div><label>Adimplentes</label><input type="number" name="adim"></div>
+                <div><label>Inadimplentes</label><input type="number" name="inad"></div>
+                <div><label>PTC Calouros</label><input type="number" name="ptc_c"></div>
+                <div><label>Pré Confirmada</label><input type="number" name="pre_conf"></div>
+                <div><label>PTC Veteranos</label><input type="number" name="ptc_v"></div>
+                <div><label>Doc Regular</label><input type="number" name="d_reg"></div>
+                <div><label>Doc Irregular</label><input type="number" name="d_irreg"></div>
+                <div><label>Semipresencial</label><input type="number" name="m_semi"></div>
+                <div><label>100% Online</label><input type="number" name="m_on"></div>
+                <div><label>Trancadas</label><input type="number" name="tranc"></div>
+                <div><label>Canceladas</label><input type="number" name="canc"></div>
+                <div><label>Ativa (Alunos Ativos)</label><input type="number" name="m_ativa"></div>
+                <div><label>Formandos</label><input type="number" name="formandos"></div>
+                <div><label>Mat. não efetivada</label><input type="number" name="mat_nao_pago"></div>
+            </div>
+            <button type="submit" class="btn-action">ATUALIZAR DADOS DO POLO</button>
+            <button type="button" class="btn-action" style="background:transparent;" onclick="window.toggleM('modAlim', false)">CANCELAR</button>
+        </form>
     </div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- MODAL METAS POR POLO -->
+<div id="modMeta" class="modal">
+    <div class="modal-content" style="width:450px">
+        <h3>Metas por Polo e Ciclo</h3>
+        <label>Selecione o Polo</label>
+        <select id="metaPoloSelect" onchange="window.loadMetaByPolo()"></select>
+        <label>Ciclo</label>
+        <select id="metaCicloSelect" onchange="window.loadMetaByPolo()"></select>
+        <label style="margin-top:10px">Meta Matrícula (PTC+Pré)</label><input type="number" id="inMMat">
+        <label style="margin-top:10px">Meta Rematrícula (Ativos+Formandos+PTC Vet)</label><input type="number" id="inMRemat">
+        <button class="btn-action" onclick="window.saveMetasPolo()">SALVAR METAS</button>
+        <button type="button" class="btn-action" style="background:transparent;" onclick="window.toggleM('modMeta', false)">FECHAR</button>
+    </div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDcBh_G4p8J_wHoaKYfxUM_b7xaMSv88mw",
-            authDomain: "crm-unopar.firebaseapp.com",
-            projectId: "crm-unopar",
-            storageBucket: "crm-unopar.firebasestorage.app",
-            messagingSenderId: "711309950758",
-            appId: "1:711309950758:web:19600cac4debb04b6a8be7"
-        };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const docRef = doc(db, "crm_data", "main_state");
+    const firebaseConfig = {
+        apiKey: "AIzaSyDcBh_G4p8J_wHoaKYfxUM_b7xaMSv88mw",
+        authDomain: "crm-unopar.firebaseapp.com",
+        projectId: "crm-unopar",
+        storageBucket: "crm-unopar.firebasestorage.app",
+        messagingSenderId: "711309950758",
+        appId: "1:711309950758:web:19600cac4debb04b6a8be7"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const docRef = doc(db, "crm_data", "main_state");
 
-        window.appData = { ciclos: ["2026.1"], activeCiclo: "2026.1", metas: {}, historico: {} };
-        window.viewDate = new Date().toISOString().split('T')[0];
-        let myCompChart = null;
+    window.appData = { 
+        polos: ["Recife", "Gravatá", "Amaraji", "Bezerros"],
+        ciclos: ["2026.1"], 
+        activeCiclo: "2026.1", 
+        metasPorPolo: {},   // { "Recife": { "2026.1": { mMat, mRemat } } }
+        historico: {}       // chave: "Recife_2026.1_2025-03-20"
+    };
+    window.currentPoloView = "all";
+    window.viewDate = new Date().toISOString().split('T')[0];
+    let myCompChart = null;
 
-        window.handleLogin = async () => {
-            const email = document.getElementById('loginEmail').value;
-            const pass = document.getElementById('loginPass').value;
-            try { await signInWithEmailAndPassword(auth, email, pass); } catch (e) { document.getElementById('loginError').style.display='block'; }
-        };
-        window.handleLogout = () => signOut(auth).then(() => location.reload());
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'flex';
-                onSnapshot(docRef, (snap) => { if (snap.exists()) { window.appData = snap.data(); window.refreshSelects(); window.render(); } });
+    // ========== MIGRAÇÃO CORRIGIDA ==========
+    // Converte dados antigos (sem polo) para o novo formato com polo "Recife"
+    const migrateLegacyAndPersist = async (data, saveCallback) => {
+        let modified = false;
+        const newData = { ...data };
+        
+        // 1. Polos padrão
+        if (!newData.polos) {
+            newData.polos = ["Recife", "Gravatá", "Amaraji", "Bezerros"];
+            modified = true;
+        }
+        // 2. Metas por polo
+        if (!newData.metasPorPolo) {
+            newData.metasPorPolo = {};
+            if (newData.metas) {
+                newData.metasPorPolo["Recife"] = newData.metas;
+                delete newData.metas;
+            } else {
+                newData.metasPorPolo["Recife"] = {};
             }
+            modified = true;
+        }
+        // 3. Histórico: converter chaves antigas para novo padrão "Polo_Ciclo_Data"
+        if (newData.historico) {
+            const oldHist = newData.historico;
+            const newHist = {};
+            for (let key in oldHist) {
+                // Se já estiver no formato Polo_Ciclo_Data (pelo menos dois underscores)
+                // Exemplo: Recife_2026.1_2025-03-20
+                const parts = key.split('_');
+                if (parts.length >= 3 && newData.polos.includes(parts[0])) {
+                    // já está no formato correto
+                    newHist[key] = oldHist[key];
+                } else {
+                    // Formato antigo: "2026.1_2025-03-20" ou apenas "2025-03-20"
+                    // Associar ao polo Recife
+                    let ciclo, dataStr;
+                    if (parts.length === 2) {
+                        ciclo = parts[0];
+                        dataStr = parts[1];
+                    } else if (parts.length === 1) {
+                        // apenas data, sem ciclo -> usa ciclo ativo padrão
+                        ciclo = newData.activeCiclo || "2026.1";
+                        dataStr = parts[0];
+                    } else {
+                        // fallback
+                        ciclo = newData.activeCiclo || "2026.1";
+                        dataStr = key;
+                    }
+                    const newKey = `Recife_${ciclo}_${dataStr}`;
+                    newHist[newKey] = oldHist[key];
+                    modified = true;
+                }
+            }
+            newData.historico = newHist;
+        } else {
+            newData.historico = {};
+            modified = true;
+        }
+        
+        // Garantir que cada polo tenha um objeto de metas vazio
+        newData.polos.forEach(p => {
+            if (!newData.metasPorPolo[p]) newData.metasPorPolo[p] = {};
+        });
+        
+        if (modified && saveCallback) {
+            await saveCallback(newData);
+        }
+        return newData;
+    };
+
+    // Helpers
+    const getDataByKey = (polo, ciclo, dataStr) => {
+        const key = `${polo}_${ciclo}_${dataStr}`;
+        return window.appData.historico[key] || {};
+    };
+    const sumAllPolosData = (ciclo, dataStr) => {
+        const result = {};
+        window.appData.polos.forEach(polo => {
+            const d = getDataByKey(polo, ciclo, dataStr);
+            for (let [k, v] of Object.entries(d)) result[k] = (result[k] || 0) + (v || 0);
+        });
+        return result;
+    };
+    const getMetaForPoloCycle = (polo, ciclo) => {
+        return window.appData.metasPorPolo[polo]?.[ciclo] || { mMat: 0, mRemat: 0 };
+    };
+    const sumMetasAllPolos = (ciclo) => {
+        let mMat = 0, mRemat = 0;
+        window.appData.polos.forEach(p => {
+            const meta = getMetaForPoloCycle(p, ciclo);
+            mMat += meta.mMat || 0;
+            mRemat += meta.mRemat || 0;
+        });
+        return { mMat, mRemat };
+    };
+    const getCurrentViewData = () => {
+        const ciclo = window.appData.activeCiclo;
+        const dataStr = window.viewDate;
+        if (window.currentPoloView === "all") {
+            return { data: sumAllPolosData(ciclo, dataStr), isAgg: true, polo: "all" };
+        } else {
+            return { data: getDataByKey(window.currentPoloView, ciclo, dataStr), isAgg: false, polo: window.currentPoloView };
+        }
+    };
+    const getCurrentMetas = () => {
+        const ciclo = window.appData.activeCiclo;
+        if (window.currentPoloView === "all") return sumMetasAllPolos(ciclo);
+        else return getMetaForPoloCycle(window.currentPoloView, ciclo);
+    };
+
+    window.drawGauge = (canvasId, val, meta, tipSpanId) => {
+        const canvas = document.getElementById(canvasId); if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width = 280, H = canvas.height = 160;
+        const cX = W/2, cY = H-20, radius = 100;
+        ctx.clearRect(0,0,W,H);
+        for(let i=0; i<40; i++){
+            const angle = Math.PI + (i * (Math.PI/40));
+            ctx.beginPath(); ctx.arc(cX, cY, radius, angle+0.01, angle+(Math.PI/40)-0.01);
+            ctx.lineWidth = 16; ctx.strokeStyle = (i/40) < 0.4 ? '#ef4444' : ((i/40) < 0.7 ? '#f59e0b' : '#22c55e');
+            ctx.stroke();
+        }
+        const angleP = Math.PI + (Math.min(val/(meta||1), 1) * Math.PI);
+        ctx.save(); ctx.translate(cX, cY); ctx.rotate(angleP);
+        ctx.beginPath(); ctx.moveTo(0,-4); ctx.lineTo(radius-10,0); ctx.lineTo(0,4); ctx.fillStyle="#fff"; ctx.fill();
+        ctx.restore();
+        const tipSpan = document.getElementById(tipSpanId);
+        if(tipSpan){
+            const tx = cX + (radius+25) * Math.cos(angleP);
+            const ty = cY + (radius+25) * Math.sin(angleP);
+            tipSpan.innerText = val;
+            tipSpan.style.left = (tx - 15) + 'px';
+            tipSpan.style.top = (ty - 15) + 'px';
+        }
+    };
+
+    window.render = () => {
+        const ciclo = window.appData.activeCiclo;
+        const { data, isAgg, polo } = getCurrentViewData();
+        const metas = getCurrentMetas();
+        const metaMat = metas.mMat || 0;
+        const metaRem = metas.mRemat || 0;
+        const metaTotal = metaMat + metaRem;
+
+        const vM = (data.ptc_c || 0) + (data.pre_conf || 0);
+        const vR = (data.m_ativa || 0) + (data.formandos || 0) + (data.ptc_v || 0);
+        const vT = vM + vR;
+
+        document.getElementById('lbl-mMat').innerText = metaMat;
+        document.getElementById('lbl-mRemat').innerText = metaRem;
+        document.getElementById('lbl-mTotal').innerText = metaTotal;
+        document.getElementById('active-ciclo-name').innerText = ciclo;
+        document.getElementById('active-polo-badge').innerText = isAgg ? "TODOS OS POLOS" : polo;
+
+        window.drawGauge('cMat', vM, metaMat, 'tip-vMat');
+        window.drawGauge('cRemat', vR, metaRem, 'tip-vRemat');
+        window.drawGauge('cTotal', vT, metaTotal, 'tip-vTotal');
+
+        const totalBase = vT;
+        const upd = (id, val) => {
+            const span = document.getElementById('txt-'+id); if(span) span.innerText = val || 0;
+            const bar = document.getElementById('bar-'+id); if(bar) bar.style.width = totalBase > 0 ? Math.min((val/totalBase)*100, 100)+'%' : '0%';
+        };
+        upd('adim', data.adim); upd('inad', data.inad); upd('tranc', data.tranc); upd('canc', data.canc);
+        upd('dreg', data.d_reg); upd('dirreg', data.d_irreg); upd('semi', data.m_semi); upd('on', data.m_on);
+        upd('ath-c', vM);
+        upd('ath-v', data.ptc_v || 0);
+    };
+
+    window.changePolo = () => {
+        window.currentPoloView = document.getElementById('poloSelector').value;
+        window.render();
+    };
+    window.changeMainDate = () => {
+        window.viewDate = document.getElementById('dateFilter').value;
+        window.render();
+    };
+
+    const populatePoloSelects = () => {
+        const polos = window.appData.polos;
+        const selectors = ['poloSelector', 'compPoloA', 'compPoloB', 'modalPoloSelect', 'metaPoloSelect'];
+        selectors.forEach(id => {
+            const el = document.getElementById(id);
+            if(!el) return;
+            const current = el.value;
+            el.innerHTML = '';
+            if(id === 'poloSelector') el.innerHTML = '<option value="all">🌍 Todos (Geral)</option>';
+            polos.forEach(p => { el.appendChild(new Option(p, p)); });
+            if(id === 'poloSelector' && current && (current==='all' || polos.includes(current))) el.value = current;
+            else if(current && polos.includes(current)) el.value = current;
+            else if(id === 'poloSelector') el.value = 'all';
+        });
+    };
+
+    window.refreshSelects = () => {
+        const ciclos = window.appData.ciclos || ["2026.1"];
+        ['modalCicloSelect', 'activeCicloSelect', 'selCicloA', 'selCicloB', 'metaCicloSelect'].forEach(id => {
+            const el = document.getElementById(id); if(!el) return;
+            el.innerHTML = '';
+            ciclos.forEach(c => el.add(new Option(c, c)));
+            if(id === 'activeCicloSelect') el.value = window.appData.activeCiclo;
+        });
+        populatePoloSelects();
+        if(document.getElementById('activeCicloSelect')) window.loadMetaByPolo();
+    };
+
+    window.loadMetaByPolo = () => {
+        const polo = document.getElementById('metaPoloSelect').value;
+        const ciclo = document.getElementById('metaCicloSelect').value;
+        const meta = window.appData.metasPorPolo[polo]?.[ciclo] || { mMat:0, mRemat:0 };
+        document.getElementById('inMMat').value = meta.mMat;
+        document.getElementById('inMRemat').value = meta.mRemat;
+    };
+    window.saveMetasPolo = async () => {
+        const polo = document.getElementById('metaPoloSelect').value;
+        const ciclo = document.getElementById('metaCicloSelect').value;
+        if (!window.appData.metasPorPolo[polo]) window.appData.metasPorPolo[polo] = {};
+        window.appData.metasPorPolo[polo][ciclo] = {
+            mMat: parseInt(document.getElementById('inMMat').value) || 0,
+            mRemat: parseInt(document.getElementById('inMRemat').value) || 0
+        };
+        window.appData.activeCiclo = ciclo;
+        await setDoc(docRef, window.appData);
+        window.toggleM('modMeta', false);
+        window.render();
+    };
+
+    window.openEditor = () => {
+        document.getElementById('modalDatePicker').value = window.viewDate;
+        document.getElementById('modalPoloSelect').value = window.currentPoloView === "all" ? "Recife" : window.currentPoloView;
+        window.loadDataToModal();
+        window.toggleM('modAlim', true);
+    };
+    window.loadDataToModal = () => {
+        const polo = document.getElementById('modalPoloSelect').value;
+        const ciclo = document.getElementById('modalCicloSelect').value || window.appData.activeCiclo;
+        const date = document.getElementById('modalDatePicker').value;
+        const h = getDataByKey(polo, ciclo, date);
+        const form = document.getElementById('fDados');
+        form.querySelectorAll('input[type="number"]').forEach(inp => { inp.value = h[inp.name] || 0; });
+    };
+    document.getElementById('fDados').onsubmit = async (e) => {
+        e.preventDefault();
+        const polo = document.getElementById('modalPoloSelect').value;
+        const date = document.getElementById('modalDatePicker').value;
+        const entry = {};
+        new FormData(e.target).forEach((v, k) => entry[k] = (k === 'ciclo' ? v : parseInt(v) || 0));
+        const cicloKey = entry.ciclo;
+        const key = `${polo}_${cicloKey}_${date}`;
+        window.appData.historico[key] = entry;
+        await setDoc(docRef, window.appData);
+        alert(`Dados salvos para ${polo} em ${date}`);
+        window.toggleM('modAlim', false);
+        window.render();
+    };
+
+    window.runComp = () => {
+        const poloA = document.getElementById('compPoloA').value;
+        const cicloA = document.getElementById('selCicloA').value;
+        const dataA = document.getElementById('selDataA').value;
+        const poloB = document.getElementById('compPoloB').value;
+        const cicloB = document.getElementById('selCicloB').value;
+        const dataB = document.getElementById('selDataB').value;
+
+        const dataObjA = getDataByKey(poloA, cicloA, dataA);
+        const dataObjB = getDataByKey(poloB, cicloB, dataB);
+        const sumM = (d) => (d.ptc_c||0) + (d.pre_conf||0);
+        const sumR = (d) => (d.ptc_v||0) + (d.m_ativa||0) + (d.formandos||0);
+        const valMA = sumM(dataObjA), valMB = sumM(dataObjB);
+        const valRA = sumR(dataObjA), valRB = sumR(dataObjB);
+        const valTA = valMA+valRA, valTB = valMB+valRB;
+
+        const ctxLine = document.getElementById('compLineChart').getContext('2d');
+        if(myCompChart) myCompChart.destroy();
+        myCompChart = new Chart(ctxLine, {
+            type: 'line',
+            data: { labels: [`${poloA} ${dataA}`, `${poloB} ${dataB}`],
+                    datasets: [
+                        { label: 'Matrícula', data: [valMA, valMB], borderColor: '#3b82f6' },
+                        { label: 'Rematrícula', data: [valRA, valRB], borderColor: '#f59e0b' },
+                        { label: 'Total', data: [valTA, valTB], borderColor: '#22c55e' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks:{color:'#fff'}, grid:{color:'#283046'} }, x:{ ticks:{color:'#fff'}, grid:{color:'#283046'} } } }
         });
 
-        const findData = (ciclo, data) => {
-            return window.appData.historico[`${ciclo}_${data}`] || window.appData.historico[data] || {};
-        };
+        const metrics = [
+            {label:'Matrícula', a:valMA, b:valMB}, {label:'Rematrícula', a:valRA, b:valRB}, {label:'Total Geral', a:valTA, b:valTB},
+            {label:'Adimplentes', a:dataObjA.adim||0, b:dataObjB.adim||0}, {label:'Inadimplentes', a:dataObjA.inad||0, b:dataObjB.inad||0},
+            {label:'Mat. não efetivada', a:dataObjA.mat_nao_pago||0, b:dataObjB.mat_nao_pago||0},
+            {label:'Evasão (Canc+Tranc)', a:(dataObjA.canc||0)+(dataObjA.tranc||0), b:(dataObjB.canc||0)+(dataObjB.tranc||0)}
+        ];
+        let html = '';
+        metrics.forEach(m => {
+            const diff = m.b - m.a;
+            const perc = m.a > 0 ? ((diff / m.a)*100).toFixed(1) : (m.b>0? '100':'0');
+            const isNeg = m.label.includes('Inad') || m.label.includes('Evas') || m.label.includes('não efetivada');
+            const color = (isNeg ? diff<=0 : diff>=0) ? 'var(--success)' : 'var(--danger)';
+            html += `<div class="comp-metric-box"><div style="display:flex; justify-content:space-between;"><span>${m.label}</span><span style="background:${color}; padding:2px 8px; border-radius:4px">${diff>0?'+':''}${perc}%</span></div>
+            <div style="display:grid; grid-template-columns:80px 1fr 80px; align-items:center; gap:10px;"><div style="text-align:right"><strong>${m.a}</strong></div>
+            <div class="comp-bar-track"><div style="width:${(m.a/(Math.max(m.a,m.b)||1)*100)}%; background:#64748b"></div><div style="width:${(m.b/(Math.max(m.a,m.b)||1)*100)}%; background:var(--accent)"></div></div>
+            <div><strong>${m.b}</strong></div></div></div>`;
+        });
+        document.getElementById('compResult').innerHTML = html;
+    };
 
-        window.checkDateEmpty = () => {
-            const date = document.getElementById('modalDatePicker').value;
-            const ciclo = document.getElementById('modalCicloSelect').value;
-            if (date && !window.appData.historico[`${ciclo}_${date}`]) alert("Não foram encontrados dados lançados para esta data.");
-        };
+    window.toggleM = (id, show) => {
+        const modal = document.getElementById(id);
+        modal.style.display = show ? 'flex' : 'none';
+        if(id === 'modComp' && show){
+            document.getElementById('selDataA').value = window.viewDate;
+            document.getElementById('selDataB').value = window.viewDate;
+            window.runComp();
+        }
+        if(id === 'modMeta' && show) window.loadMetaByPolo();
+    };
 
-        window.toggleM = (id, s) => {
-            document.getElementById(id).style.display = s ? 'flex' : 'none';
-            if(id === 'modComp' && s) {
-                document.getElementById('selDataA').value = window.viewDate;
-                document.getElementById('selDataB').value = window.viewDate;
-                window.runComp();
-            }
-        };
+    window.handleLogin = async () => {
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+        try { await signInWithEmailAndPassword(auth, email, pass); } catch(e) { document.getElementById('loginError').style.display='block'; }
+    };
+    window.handleLogout = () => signOut(auth).then(() => location.reload());
 
-        window.refreshSelects = () => {
-            ['modalCicloSelect', 'activeCicloSelect', 'selCicloA', 'selCicloB'].forEach(id => {
-                const el = document.getElementById(id); if(!el) return;
-                el.innerHTML = ''; window.appData.ciclos.forEach(c => el.add(new Option(c, c)));
-                if(id === 'activeCicloSelect') el.value = window.appData.activeCiclo;
-            });
-            window.loadMeta();
-        };
-
-        window.addCiclo = () => {
-            const n = document.getElementById('newCName').value;
-            if(n && !window.appData.ciclos.includes(n)) {
-                window.appData.ciclos.push(n); window.appData.metas[n] = {mMat:0, mRemat:0};
-                window.refreshSelects(); document.getElementById('newCName').value = '';
-            }
-        };
-
-        window.loadMeta = () => {
-            const c = document.getElementById('activeCicloSelect').value;
-            const m = window.appData.metas[c] || {mMat:0, mRemat:0};
-            document.getElementById('inMMat').value = m.mMat;
-            document.getElementById('inMRemat').value = m.mRemat;
-        };
-
-        window.saveMetas = async () => {
-            const c = document.getElementById('activeCicloSelect').value;
-            window.appData.activeCiclo = c;
-            window.appData.metas[c] = {
-                mMat: parseInt(document.getElementById('inMMat').value) || 0,
-                mRemat: parseInt(document.getElementById('inMRemat').value) || 0
-            };
-            await setDoc(docRef, window.appData);
-            window.toggleM('modMeta', false);
-        };
-
-        document.getElementById('fDados').onsubmit = async (e) => {
-            e.preventDefault();
-            const date = document.getElementById('modalDatePicker').value;
-            const entry = {};
-            new FormData(e.target).forEach((v, k) => entry[k] = (k === 'ciclo' ? v : parseInt(v) || 0));
-            window.appData.historico[`${entry.ciclo}_${date}`] = entry;
-            await setDoc(docRef, window.appData);
-            alert("Dados Salvos!"); window.toggleM('modAlim', false);
-        };
-
-        window.drawG = (id, val, meta, tipId) => {
-            const canvas = document.getElementById(id); const ctx = canvas.getContext('2d');
-            const W = canvas.width = 280, H = canvas.height = 160;
-            const cX = W/2, cY = H-20, radius = 100;
-            ctx.clearRect(0,0,W,H);
-            for(let i=0; i<40; i++){
-                const angle = Math.PI + (i * (Math.PI/40));
-                ctx.beginPath(); ctx.arc(cX, cY, radius, angle+0.01, angle+(Math.PI/40)-0.01);
-                ctx.lineWidth = 16; ctx.strokeStyle = (i/40) < 0.4 ? '#ef4444' : ((i/40) < 0.7 ? '#f59e0b' : '#22c55e');
-                ctx.stroke();
-            }
-            const angleP = Math.PI + (Math.min(val/(meta||1), 1) * Math.PI);
-            ctx.save(); ctx.translate(cX, cY); ctx.rotate(angleP);
-            ctx.beginPath(); ctx.moveTo(0,-4); ctx.lineTo(radius-10,0); ctx.lineTo(0,4); ctx.fillStyle="#fff"; ctx.fill();
-            ctx.restore();
-            const el = document.getElementById(tipId); 
-            if(el){
-                const tx = cX + (radius+25) * Math.cos(angleP); const ty = cY + (radius+25) * Math.sin(angleP);
-                el.innerText = val; el.style.left = (tx - 15) + 'px'; el.style.top = (ty - 15) + 'px';
-            }
-        };
-
-        window.render = () => {
-            document.getElementById('active-ciclo-name').innerText = window.appData.activeCiclo;
-            const d = findData(window.appData.activeCiclo, window.viewDate);
-            const meta = window.appData.metas[window.appData.activeCiclo] || {mMat:1, mRemat:1};
+    // Inicialização com migração e persistência
+    onAuthStateChanged(auth, async (user) => {
+        if(user){
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'flex';
             
-            const vM = (d.ptc_c || 0) + (d.pre_conf || 0);
-            const vR = (d.m_ativa || 0) + (d.formandos || 0) + (d.ptc_v || 0);
-            const vT = vM + vR;
-
-            document.getElementById('lbl-mMat').innerText = meta.mMat || 0;
-            document.getElementById('lbl-mRemat').innerText = meta.mRemat || 0;
-            document.getElementById('lbl-mTotal').innerText = (meta.mMat||0) + (meta.mRemat||0);
-
-            window.drawG('cMat', vM, meta.mMat, 'tip-vMat');
-            window.drawG('cRemat', vR, meta.mRemat, 'tip-vRemat');
-            window.drawG('cTotal', vT, (meta.mMat + meta.mRemat), 'tip-vTotal');
-
-            const upd = (id, v) => {
-                if(document.getElementById('txt-'+id)) document.getElementById('txt-'+id).innerText = v || 0;
-                if(document.getElementById('bar-'+id)) document.getElementById('bar-'+id).style.width = vT > 0 ? Math.min((v/vT)*100, 100)+'%' : '0%';
-            };
-            
-            upd('adim', d.adim); upd('inad', d.inad); upd('tranc', d.tranc); upd('canc', d.canc); 
-            upd('dreg', d.d_reg); upd('dirreg', d.d_irreg); upd('semi', d.m_semi); upd('on', d.m_on);
-            
-            // CORREÇÃO: Barra de Dynamics ATH agora usa o helper 'upd' para atualizar progresso corretamente
-            upd('ath-c', vM);
-            upd('ath-v', (d.ptc_v || 0));
-        };
-
-        window.runComp = () => {
-            const cA = document.getElementById('selCicloA').value; const dA = document.getElementById('selDataA').value;
-            const cB = document.getElementById('selCicloB').value; const dB = document.getElementById('selDataB').value;
-            const dataA = findData(cA, dA); const dataB = findData(cB, dB);
-
-            const sumM = (d) => (d.ptc_c||0) + (d.pre_conf||0);
-            const sumR = (d) => (d.ptc_v||0) + (d.m_ativa||0) + (d.formandos||0);
-
-            const valMA = sumM(dataA), valMB = sumM(dataB);
-            const valRA = sumR(dataA), valRB = sumR(dataB);
-            const valTA = valMA + valRA, valTB = valMB + valRB;
-
-            const ctxLine = document.getElementById('compLineChart').getContext('2d');
-            if (myCompChart) myCompChart.destroy();
-            myCompChart = new Chart(ctxLine, {
-                type: 'line',
-                data: {
-                    labels: [dA || 'Ponto A', dB || 'Ponto B'],
-                    datasets: [
-                        { label: 'Matrícula', data: [valMA, valMB], borderColor: '#3b82f6', tension: 0.1 },
-                        { label: 'Rematrícula', data: [valRA, valRB], borderColor: '#f59e0b', tension: 0.1 },
-                        { label: 'Total', data: [valTA, valTB], borderColor: '#22c55e', tension: 0.1 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { y: { ticks: { color: '#fff' }, grid: { color: '#283046' } }, x: { ticks: { color: '#fff' }, grid: { color: '#283046' } } } }
+            // Escuta os dados em tempo real
+            onSnapshot(docRef, async (snap) => {
+                let data = snap.exists() ? snap.data() : { 
+                    polos: ["Recife", "Gravatá", "Amaraji", "Bezerros"],
+                    ciclos: ["2026.1"], 
+                    activeCiclo: "2026.1", 
+                    metasPorPolo: { "Recife": {} },
+                    historico: {} 
+                };
+                
+                // Aplica migração (caso necessário) e persiste
+                const migrateAndSave = async (newData) => {
+                    await setDoc(docRef, newData);
+                    return newData;
+                };
+                const migrated = await migrateLegacyAndPersist(data, migrateAndSave);
+                window.appData = migrated;
+                window.refreshSelects();
+                window.render();
+                if(document.getElementById('poloSelector')) window.currentPoloView = document.getElementById('poloSelector').value;
+                window.render();
             });
-
-            const metrics = [
-                { label: 'Matrícula (PTC+Pré)', keyA: valMA, keyB: valMB },
-                { label: 'Rematrícula (Soma)', keyA: valRA, keyB: valRB },
-                { label: 'Total Geral', keyA: valTA, keyB: valTB },
-                { label: 'Adimplentes', keyA: dataA.adim||0, keyB: dataB.adim||0 },
-                { label: 'Inadimplentes', keyA: dataA.inad||0, keyB: dataB.inad||0 },
-                { label: 'Mat. não efetivada', keyA: dataA.mat_nao_pago||0, keyB: dataB.mat_nao_pago||0 },
-                { label: 'Evasão (Canc+Tran)', keyA: (dataA.canc||0)+(dataA.tranc||0), keyB: (dataB.canc||0)+(dataB.tranc||0) }
-            ];
-
-            let html = '';
-            metrics.forEach(m => {
-                const diff = m.keyB - m.keyA;
-                const perc = m.keyA > 0 ? ((diff / m.keyA) * 100).toFixed(1) : (m.keyB > 0 ? '100' : '0');
-                const isNeg = m.label.includes('Inad') || m.label.includes('Evas') || m.label.includes('não efetivada');
-                const color = (isNeg ? diff <= 0 : diff >= 0) ? 'var(--success)' : 'var(--danger)';
-
-                html += `
-                <div class="comp-metric-box">
-                    <div style="display:flex; justify-content:space-between; font-size:0.8rem">
-                        <span style="color:var(--muted)">${m.label}</span>
-                        <span style="background:${color}; color:white; padding:2px 8px; border-radius:4px">${diff > 0 ? '+' : ''}${perc}%</span>
-                    </div>
-                    <div style="display:grid; grid-template-columns: 80px 1fr 80px; align-items:center; gap:10px; margin-top:5px">
-                        <div style="text-align:right"><strong>${m.keyA}</strong></div>
-                        <div class="comp-bar-track">
-                            <div style="width:${(m.keyA/(Math.max(m.keyA,m.keyB)||1)*100)}%; background:#64748b"></div>
-                            <div style="width:${(m.keyB/(Math.max(m.keyA,m.keyB)||1)*100)}%; background:var(--accent); margin-left:2px"></div>
-                        </div>
-                        <div><strong>${m.keyB}</strong></div>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('compResult').innerHTML = html;
-        };
-
-        window.changeMainDate = () => { window.viewDate = document.getElementById('dateFilter').value; window.render(); };
-        window.openEditor = () => { document.getElementById('modalDatePicker').value = window.viewDate; window.loadDataToModal(); window.toggleM('modAlim', true); };
-        window.loadDataToModal = () => {
-            const ciclo = document.getElementById('modalCicloSelect').value || window.appData.activeCiclo;
-            const date = document.getElementById('modalDatePicker').value;
-            const h = findData(ciclo, date);
-            const f = document.getElementById('fDados');
-            f.querySelectorAll('input[type="number"]').forEach(i => i.value = h[i.name] || 0);
-        };
-        document.getElementById('dateFilter').value = window.viewDate;
-    </script>
+        }
+    });
+    document.getElementById('dateFilter').value = window.viewDate;
+</script>
 </body>
 </html>
