@@ -18,7 +18,7 @@
         .main { flex: 1; padding: 20px 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         .dashboard-header { border-bottom: 1px solid var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 10px; }
         .header-info h1 { margin: 0; font-size: 1.6rem; color: white; }
-        .filters-row { display: flex; gap: 15px; align-items: center; background: var(--bg-card); padding: 8px 15px; border-radius: 40px; }
+        .filters-row { display: flex; gap: 15px; align-items: center; background: var(--bg-card); padding: 8px 15px; border-radius: 40px; flex-wrap: wrap; }
         .filters-row select, .filters-row input { background: #0a0f1c; border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 20px; width: auto; }
         .gauge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .gauge-card { background: var(--bg-card); border-radius: 15px; border: 1px solid var(--border); padding: 20px; position: relative; height: 340px; display: flex; flex-direction: column; align-items: center; }
@@ -79,7 +79,8 @@
             </div>
             <div class="filters-row">
                 <div class="inline-label"><i class="fas fa-store"></i> <select id="poloSelector" onchange="window.changePolo()"><option value="all">🌍 Todos (Geral)</option></select></div>
-                <div class="inline-label"><i class="fas fa-calendar"></i> <input type="date" id="dateFilter" onchange="window.changeMainDate()"></div>
+                <div class="inline-label"><i class="fas fa-calendar-alt"></i> <select id="cycleSelector" onchange="window.changeCycle()"></select></div>
+                <div class="inline-label"><i class="fas fa-calendar-day"></i> <input type="date" id="dateFilter" onchange="window.changeMainDate()"></div>
             </div>
         </header>
 
@@ -208,27 +209,30 @@
 
     window.appData = { 
         polos: ["Recife", "Gravatá", "Amaraji", "Bezerros"],
-        ciclos: ["2026.1"], 
+        ciclos: ["2026.1", "2026.2"],   // segundo semestre adicionado
         activeCiclo: "2026.1", 
-        metasPorPolo: {},   // { "Recife": { "2026.1": { mMat, mRemat } } }
-        historico: {}       // chave: "Recife_2026.1_2025-03-20"
+        metasPorPolo: {},   
+        historico: {}       
     };
     window.currentPoloView = "all";
     window.viewDate = new Date().toISOString().split('T')[0];
     let myCompChart = null;
 
-    // ========== MIGRAÇÃO CORRIGIDA ==========
-    // Converte dados antigos (sem polo) para o novo formato com polo "Recife"
-    const migrateLegacyAndPersist = async (data, saveCallback) => {
+    // Migração para garantir que o ciclo 2026.2 exista
+    const ensure2026_2 = async (data, saveCallback) => {
         let modified = false;
         const newData = { ...data };
-        
-        // 1. Polos padrão
+        if (!newData.ciclos) {
+            newData.ciclos = ["2026.1", "2026.2"];
+            modified = true;
+        } else if (!newData.ciclos.includes("2026.2")) {
+            newData.ciclos.push("2026.2");
+            modified = true;
+        }
         if (!newData.polos) {
             newData.polos = ["Recife", "Gravatá", "Amaraji", "Bezerros"];
             modified = true;
         }
-        // 2. Metas por polo
         if (!newData.metasPorPolo) {
             newData.metasPorPolo = {};
             if (newData.metas) {
@@ -239,30 +243,22 @@
             }
             modified = true;
         }
-        // 3. Histórico: converter chaves antigas para novo padrão "Polo_Ciclo_Data"
         if (newData.historico) {
             const oldHist = newData.historico;
             const newHist = {};
             for (let key in oldHist) {
-                // Se já estiver no formato Polo_Ciclo_Data (pelo menos dois underscores)
-                // Exemplo: Recife_2026.1_2025-03-20
                 const parts = key.split('_');
                 if (parts.length >= 3 && newData.polos.includes(parts[0])) {
-                    // já está no formato correto
                     newHist[key] = oldHist[key];
                 } else {
-                    // Formato antigo: "2026.1_2025-03-20" ou apenas "2025-03-20"
-                    // Associar ao polo Recife
                     let ciclo, dataStr;
                     if (parts.length === 2) {
                         ciclo = parts[0];
                         dataStr = parts[1];
                     } else if (parts.length === 1) {
-                        // apenas data, sem ciclo -> usa ciclo ativo padrão
                         ciclo = newData.activeCiclo || "2026.1";
                         dataStr = parts[0];
                     } else {
-                        // fallback
                         ciclo = newData.activeCiclo || "2026.1";
                         dataStr = key;
                     }
@@ -276,19 +272,15 @@
             newData.historico = {};
             modified = true;
         }
-        
-        // Garantir que cada polo tenha um objeto de metas vazio
         newData.polos.forEach(p => {
             if (!newData.metasPorPolo[p]) newData.metasPorPolo[p] = {};
         });
-        
         if (modified && saveCallback) {
             await saveCallback(newData);
         }
         return newData;
     };
 
-    // Helpers
     const getDataByKey = (polo, ciclo, dataStr) => {
         const key = `${polo}_${ciclo}_${dataStr}`;
         return window.appData.historico[key] || {};
@@ -395,6 +387,14 @@
         window.viewDate = document.getElementById('dateFilter').value;
         window.render();
     };
+    window.changeCycle = async () => {
+        const newCycle = document.getElementById('cycleSelector').value;
+        if (newCycle && newCycle !== window.appData.activeCiclo) {
+            window.appData.activeCiclo = newCycle;
+            await setDoc(docRef, window.appData);
+            window.render();
+        }
+    };
 
     const populatePoloSelects = () => {
         const polos = window.appData.polos;
@@ -413,11 +413,12 @@
     };
 
     window.refreshSelects = () => {
-        const ciclos = window.appData.ciclos || ["2026.1"];
-        ['modalCicloSelect', 'activeCicloSelect', 'selCicloA', 'selCicloB', 'metaCicloSelect'].forEach(id => {
+        const ciclos = window.appData.ciclos || ["2026.1", "2026.2"];
+        ['modalCicloSelect', 'activeCicloSelect', 'selCicloA', 'selCicloB', 'metaCicloSelect', 'cycleSelector'].forEach(id => {
             const el = document.getElementById(id); if(!el) return;
             el.innerHTML = '';
             ciclos.forEach(c => el.add(new Option(c, c)));
+            if(id === 'cycleSelector') el.value = window.appData.activeCiclo;
             if(id === 'activeCicloSelect') el.value = window.appData.activeCiclo;
         });
         populatePoloSelects();
@@ -469,7 +470,7 @@
         const key = `${polo}_${cicloKey}_${date}`;
         window.appData.historico[key] = entry;
         await setDoc(docRef, window.appData);
-        alert(`Dados salvos para ${polo} em ${date}`);
+        alert(`Dados salvos para ${polo} em ${date} (ciclo ${cicloKey})`);
         window.toggleM('modAlim', false);
         window.render();
     };
@@ -494,7 +495,7 @@
         if(myCompChart) myCompChart.destroy();
         myCompChart = new Chart(ctxLine, {
             type: 'line',
-            data: { labels: [`${poloA} ${dataA}`, `${poloB} ${dataB}`],
+            data: { labels: [`${poloA} ${dataA} (${cicloA})`, `${poloB} ${dataB} (${cicloB})`],
                     datasets: [
                         { label: 'Matrícula', data: [valMA, valMB], borderColor: '#3b82f6' },
                         { label: 'Rematrícula', data: [valRA, valRB], borderColor: '#f59e0b' },
@@ -540,28 +541,25 @@
     };
     window.handleLogout = () => signOut(auth).then(() => location.reload());
 
-    // Inicialização com migração e persistência
     onAuthStateChanged(auth, async (user) => {
         if(user){
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
             
-            // Escuta os dados em tempo real
             onSnapshot(docRef, async (snap) => {
                 let data = snap.exists() ? snap.data() : { 
                     polos: ["Recife", "Gravatá", "Amaraji", "Bezerros"],
-                    ciclos: ["2026.1"], 
+                    ciclos: ["2026.1", "2026.2"], 
                     activeCiclo: "2026.1", 
                     metasPorPolo: { "Recife": {} },
                     historico: {} 
                 };
                 
-                // Aplica migração (caso necessário) e persiste
                 const migrateAndSave = async (newData) => {
                     await setDoc(docRef, newData);
                     return newData;
                 };
-                const migrated = await migrateLegacyAndPersist(data, migrateAndSave);
+                const migrated = await ensure2026_2(data, migrateAndSave);
                 window.appData = migrated;
                 window.refreshSelects();
                 window.render();
