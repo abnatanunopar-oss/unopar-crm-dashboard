@@ -64,6 +64,7 @@
 
     </style>
 <base target="_blank">
+<base target="_blank">
 </head>
 <body>
 
@@ -266,7 +267,7 @@
 
     window.appData = { 
         polos: ["Recife", "Gravatá", "Amaraji", "Bezerros"],
-        ciclos: ["2026.1", "2026.2"],   // APENAS ISSO FOI ADICIONADO
+        ciclos: ["2026.1", "2026.2", "2027.1", "2027.2"],   // APENAS ISSO FOI ADICIONADO
         activeCiclo: "2026.1", 
         metasPorPolo: {},   // estrutura original: metasPorPolo[polo][ciclo]
         historico: {}       // chave original: `${polo}_${ciclo}_${data}`
@@ -276,15 +277,19 @@
     let myCompChart = null;
 
     // NENHUMA MIGRAÇÃO DE ESTRUTURA – APENAS GARANTE QUE O CICLO 2026.2 EXISTA NO BANCO SE NÃO EXISTIR
-    const ensure2026_2cycle = async (data, saveCallback) => {
+    const ensureCycles = async (data, saveCallback) => {
         let modified = false;
         const newData = { ...data };
         if (!newData.ciclos) {
-            newData.ciclos = ["2026.1", "2026.2"];
+            newData.ciclos = ["2026.1", "2026.2", "2027.1", "2027.2"];
             modified = true;
-        } else if (!newData.ciclos.includes("2026.2")) {
-            newData.ciclos.push("2026.2");
-            modified = true;
+        } else {
+            ["2026.2", "2027.1", "2027.2"].forEach(c => {
+                if (!newData.ciclos.includes(c)) {
+                    newData.ciclos.push(c);
+                    modified = true;
+                }
+            });
         }
         // Mantém as metas existentes exatamente como estão, sem nenhuma alteração
         if (modified && saveCallback) {
@@ -444,7 +449,7 @@
     };
 
     window.refreshSelects = () => {
-        const ciclos = window.appData.ciclos || ["2026.1", "2026.2"];
+        const ciclos = window.appData.ciclos || ["2026.1", "2026.2", "2027.1", "2027.2"];
         ['modalCicloSelect', 'selCicloA', 'selCicloB', 'metaCicloSelect', 'cycleSelector'].forEach(id => {
             const el = document.getElementById(id); if(!el) return;
             el.innerHTML = '';
@@ -578,7 +583,7 @@
             onSnapshot(docRef, async (snap) => {
                 let data = snap.exists() ? snap.data() : { 
                     polos: ["Recife", "Gravatá", "Amaraji", "Bezerros"],
-                    ciclos: ["2026.1", "2026.2"], 
+                    ciclos: ["2026.1", "2026.2", "2027.1", "2027.2"], 
                     activeCiclo: "2026.1", 
                     metasPorPolo: { "Recife": {} },
                     historico: {} 
@@ -588,7 +593,7 @@
                     await setDoc(docRef, newData);
                     return newData;
                 };
-                const ensured = await ensure2026_2cycle(data, saveIfNeeded);
+                const ensured = await ensureCycles(data, saveIfNeeded);
                 window.appData = ensured;
                 window.refreshSelects();
                 window.render();
